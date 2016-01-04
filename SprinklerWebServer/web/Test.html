@@ -40,6 +40,8 @@
                 <tr><td>Temps</td><td><label id="ControllerTemps">[time]</label></td></tr>
 
             </table>
+
+            <button onclick="pauseProgTest()">Pause Program</button>
 		</div>
 
 		<script>
@@ -84,25 +86,14 @@
                         $('#ControllerTemps').html("Inside: " + obj.InsideTemp + "F   Outside: " + obj.OutsideTemp + "F");
                         $('#ZoneRunSecondsLeft').html(Math.floor(obj.ZoneRunSecondsLeft / 60) + ":" + (obj.ZoneRunSecondsLeft % 60));
                         $('#PauseTimeLeft').html(Math.floor(obj.ZonePauseSecondsLeft / 60) + ":" + (obj.ZonePauseSecondsLeft % 60));
-                        SetZonesOn(obj.ZonesOn);
+                        
                     }
                 });
 		    }
 
-		    function SetZonesOn(list) {
-		        for (i = 0; i < list.length; i++) {
-		            UpdateButton(i + 1, list[i]);
-                }
-		    }
-
-		    function turnZoneOnOff(zone, turnOn) {
-		        // post a request to turn a zone on/off
-		        var url = hostAndPort + '/zone/' + zone;
-		        if (turnOn)
-		            url = url + '/ON';
-		        else
-		            url = url + '/OFF';
-
+		    function pauseProgTest() {
+		        // post a request to pause for 1 minute
+		        var url = hostAndPort + '/program/pause/1';
 		        $.ajax({
 		            type: 'POST',
 		            url: url
@@ -113,42 +104,6 @@
                 });
 
 		    }
-
-            // update the buttons setting background color to green if on
-		    function UpdateButton(zone, data) {
-		        if (data) {
-		            $('#' + zone)[0].style.backgroundColor = 'rgb(0,255,0)';
-		            onOffList[zone] = true;
-		        }
-		        else {
-		            $('#' + zone)[0].style.backgroundColor = '';
-		            onOffList[zone] = false;
-                }
-		    }
-
-			
-			function handleClick(evt){
-				var tgt = evt.target;
-				//console.log('original target: '+ tgt);
-				if(tgt.nodeType == 3){
-					tgt = tgt.parentNode;
-				}
-				//console.log('normalized target: '+ tgt);
-				if(tgt.className.indexOf('hitArea') != -1 || tgt.nodeName === 'TD'){ //Safari iOS doesn't support Element.classList methods (as of 2010/09/28)
-				    console.log('you clicked on ' + tgt.innerHTML);
-				    var zone = tgt.innerHTML;
-				    var turnOn = !onOffList[zone];
-				    onOffList[zone] = !onOffList[zone];
-				    turnZoneOnOff(zone, turnOn);
-				}
-			}
-			
-			//attach click handler for each '.delegate'
-			Array.prototype.forEach.call(document.querySelectorAll('.delegate'), function(el){
-			    el.addEventListener('click', handleClick, false);
-                // add a click handler to the table
-			    //console.log('adding click handler to ' + el.nodeName);
-			});
 
 			// check zone status every so often
 			setInterval(function () {

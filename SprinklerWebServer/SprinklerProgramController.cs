@@ -69,6 +69,8 @@ namespace SprinklerWebServer
                         {
                             isPaused = false;
                             ZonePauseStopTime = DateTime.MaxValue;
+                            // restart the stopped zone...
+                            Controller.SetZoneOn(RunningZone);
                         }
                         // just figure out how much longer it needs to wait
                         TimeSpan diff = ZonePauseStopTime - DateTime.Now;
@@ -284,11 +286,11 @@ namespace SprinklerWebServer
                     // stop current zone
                     Controller.SetZoneOff(RunningZone);
                 }
+                isPaused = true;
                 zoneRunSecondsLeft += minutes * 60;
                 ZoneStopTime = ZoneStopTime.AddMinutes(minutes);
                 zonePauseSecondsLeft = minutes * 60;
                 ZonePauseStopTime = DateTime.Now.AddMinutes(minutes);
-                isPaused = true;
             }
 
         }

@@ -406,19 +406,23 @@ namespace SprinklerWebServer
                 switch(cmd)
                 {
                     case "PAUSE":
+                        urlFound = true;
                         int minutes = int.Parse(zc.Item2);
                         programController.PauseProgram(minutes);
                         responseMsg = "true";
                         break;
                     case "STOP":
+                        urlFound = true;
                         programController.StopProgram();
                         responseMsg = "true";
                         break;
                     case "RUNNEXTZONE":
+                        urlFound = true;
                         programController.RunNextZone();
                         responseMsg = "true";
                         break;
                     case "START":
+                        urlFound = true;
                         int progIndex = int.Parse(zc.Item2);
                         programController.StartProgram(progIndex);
                         responseMsg = "true";
