@@ -1,0 +1,134 @@
+﻿<!doctype html>
+<html>
+	<head>
+		<title>Test: iPhone click delegation - #01</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<style>
+			html, body, div{margin:0; padding:0}
+			body{font-family:sans-serif; font-size:x-small}
+			h1{margin:0.5em 0 0}
+			h4{margin-top:0.3em}
+			dt{font-weight:bold; margin:0.3em 0}
+			hr{margin:0}
+			.holder{ padding:0px 0px 0px; margin:0 auto}
+			.hitArea{background-color:#eee; border:1px solid #aaa; padding:20px; text-align:center; border-radius:10px; font-weight:bold; display:block}
+			.hitSwipe{padding:0px 20px}
+			.highlight{border:1px solid red; color: red}
+			.highlight_2{border:1px solid green; color: green}
+			.delegateTd{text-align:center; width:100%}
+			.delegateTd td{border:1px solid #aaa; background-color:#eee; padding:20px}
+			.delegateDiv .hitArea{width:auto; margin:0px; padding:0px 0px}
+			.container{border:1px solid #aaa; padding:0px; background-color:rgba(170, 170, 170, 0.2)}
+			.nav li{margin:1em 0}
+		</style>
+
+        <script src="./js/jquery-2.1.3.min.js"></script>
+        <script src="./js/bootstrap.min.js"></script>
+        <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+        <script src="./js/ie10-viewport-bug-workaround.js"></script>
+
+	</head>
+	<body>
+		<div class="holder">
+			<B>Zones: </B> <label id="ControllerDatetime">[time]</label>
+            <img src="./images/lawn.png" alt="lawn" >
+            <label id="ControllerTemps">[temps]</label>
+		</div>
+
+		<script>
+		    //var hostAndPort = "http://minwinpc:8888";
+            // seems like the iphone likes the ip address better...
+		    var hostAndPort = "http://192.168.1.200:8888";
+		    var onOffList = new Array(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
+
+		    function QueryStatus() {
+		        var url = hostAndPort + '/query/status';
+		        $.ajax({
+		            type: 'GET',
+		            url: url
+		        })
+                .done(function (data) {
+                    var obj = JSON.parse(data);
+                    if (obj.isError) {
+                        // todo - display the error here
+                        console.log('Error detected ' + obj)
+                    }
+                    else {
+                        // {"CurrentTime":"1\/2\/2016 3:00:53 PM","InsideTemp":72,"OutsideTemp":32,"ZonesOn":[5,6]}
+                        $('#ControllerDatetime').html(obj.CurrentTime);
+                        $('#ControllerTemps').html("Inside: " + obj.InsideTemp + "F   Outside: " + obj.OutsideTemp + "F");
+                        SetZonesOn(obj.ZonesOn);
+                    }
+                });
+		    }
+
+		    function SetZonesOn(list) {
+		        for (i = 0; i < list.length; i++) {
+		            UpdateButton(i + 1, list[i]);
+                }
+		    }
+
+		    function turnZoneOnOff(zone, turnOn) {
+		        // post a request to turn a zone on/off
+		        var url = hostAndPort + '/zone/' + zone;
+		        if (turnOn)
+		            url = url + '/ON';
+		        else
+		            url = url + '/OFF';
+
+		        $.ajax({
+		            type: 'POST',
+		            url: url
+		        })
+                .done(function (data) {
+                    QueryStatus();
+                    console.log('Did it ' + data)
+                });
+
+		    }
+
+            // update the buttons setting background color to green if on
+		    function UpdateButton(zone, data) {
+		        if (data) {
+		            $('#' + zone)[0].style.backgroundColor = 'rgb(0,255,0)';
+		            onOffList[zone] = true;
+		        }
+		        else {
+		            $('#' + zone)[0].style.backgroundColor = '';
+		            onOffList[zone] = false;
+                }
+		    }
+
+			
+			function handleClick(evt){
+				var tgt = evt.target;
+				//console.log('original target: '+ tgt);
+				if(tgt.nodeType == 3){
+					tgt = tgt.parentNode;
+				}
+				//console.log('normalized target: '+ tgt);
+				if(tgt.className.indexOf('hitArea') != -1 || tgt.nodeName === 'TD'){ //Safari iOS doesn't support Element.classList methods (as of 2010/09/28)
+				    console.log('you clicked on ' + tgt.innerHTML);
+				    var zone = tgt.innerHTML;
+				    var turnOn = !onOffList[zone];
+				    onOffList[zone] = !onOffList[zone];
+				    turnZoneOnOff(zone, turnOn);
+				}
+			}
+			
+			//attach click handler for each '.delegate'
+			Array.prototype.forEach.call(document.querySelectorAll('.delegate'), function(el){
+			    el.addEventListener('click', handleClick, false);
+                // add a click handler to the table
+			    //console.log('adding click handler to ' + el.nodeName);
+			});
+
+			// check zone status every so often
+			setInterval(function () {
+			    //QueryStatus();
+			}, 2500);
+
+		</script>
+	</body>
+</html>

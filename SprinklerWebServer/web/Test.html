@@ -1,0 +1,160 @@
+﻿<!doctype html>
+<html>
+	<head>
+		<title>Test page</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<style>
+			html, body, div{margin:0; padding:0}
+			body{font-family:sans-serif; font-size:x-small}
+			h1{margin:0.5em 0 0}
+			h4{margin-top:0.3em}
+			dt{font-weight:bold; margin:0.3em 0}
+			hr{margin:0}
+			.holder{width:280px; padding:20px 20px 30px; margin:0 auto}
+			.hitArea{background-color:#eee; border:1px solid #aaa; padding:20px; text-align:center; border-radius:10px; font-weight:bold; display:block}
+			.hitSwipe{padding:60px 20px}
+			.highlight{border:1px solid red; color: red}
+			.highlight_2{border:1px solid green; color: green}
+			.delegateTd{text-align:center; width:100%}
+			.delegateTd td{border:1px solid #aaa; background-color:#eee; padding:20px}
+			.delegateDiv .hitArea{width:auto; margin:5px; padding:40px 20px}
+			.container{border:1px solid #aaa; padding:5px; background-color:rgba(170, 170, 170, 0.2)}
+			.nav li{margin:1em 0}
+		</style>
+
+        <script src="./js/jquery-2.1.3.min.js"></script>
+        <script src="./js/bootstrap.min.js"></script>
+        <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+        <script src="./js/ie10-viewport-bug-workaround.js"></script>
+
+	</head>
+	<body>
+		<div class="holder">
+            <table>
+                <tr><td>Current Time</td><td><label id="ControllerDatetime">[time]</label></td></tr>
+                <tr><td>Running Zone</td><td><label id="RunningZone">[time]</label></td></tr>
+                <tr><td>Zone Run Time Left</td><td><label id="ZoneRunSecondsLeft">[time]</label></td></tr>
+                <tr><td>Is Paused</td><td><label id="IsPaused">[paused]</label></td></tr>
+                <tr><td>Pause Time Left</td><td><label id="PauseTimeLeft">[paused]</label></td></tr>
+                <tr><td>Temps</td><td><label id="ControllerTemps">[time]</label></td></tr>
+
+            </table>
+		</div>
+
+		<script>
+		    //var hostAndPort = "http://minwinpc:8888";
+            // seems like the iphone likes the ip address better...
+		    var hostAndPort = "http://192.168.1.200:8888";
+		    var onOffList = new Array(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
+
+		    function QueryStatus() {
+		        var url = hostAndPort + '/query/status';
+		        $.ajax({
+		            type: 'GET',
+		            url: url
+		        })
+                .done(function (data) {
+                    var obj = JSON.parse(data);
+                    if (obj.isError) {
+                        // todo - display the error here
+                        console.log('Error detected ' + obj)
+                    }
+                    else {
+                        //"{\"CurrentTime\":\"1\\/2\\/2016 8:09:41 PM\",\"InsideTemp\":\"67.89\",\"OutsideTemp\":\"-196.60\",\"ZoneRunSecondsLeft\":0,
+                        //\"ZonesOn\":[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]}"
+                        $('#ControllerDatetime').html(obj.CurrentTime);
+                        var zoneOn = 0;
+                        var found = false;
+                        for (var isOn in obj.ZonesOn) {
+                            zoneOn++;
+                            if (isOn) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(found) 
+                            $('#RunningZone').html(zoneOn);
+                        else
+                            $('#RunningZone').html('none');
+
+
+                        $('#IsPaused').html(obj.IsPaused.toString());
+
+                        $('#ControllerTemps').html("Inside: " + obj.InsideTemp + "F   Outside: " + obj.OutsideTemp + "F");
+                        $('#ZoneRunSecondsLeft').html(Math.floor(obj.ZoneRunSecondsLeft / 60) + ":" + (obj.ZoneRunSecondsLeft % 60));
+                        $('#PauseTimeLeft').html(Math.floor(obj.ZonePauseSecondsLeft / 60) + ":" + (obj.ZonePauseSecondsLeft % 60));
+                        SetZonesOn(obj.ZonesOn);
+                    }
+                });
+		    }
+
+		    function SetZonesOn(list) {
+		        for (i = 0; i < list.length; i++) {
+		            UpdateButton(i + 1, list[i]);
+                }
+		    }
+
+		    function turnZoneOnOff(zone, turnOn) {
+		        // post a request to turn a zone on/off
+		        var url = hostAndPort + '/zone/' + zone;
+		        if (turnOn)
+		            url = url + '/ON';
+		        else
+		            url = url + '/OFF';
+
+		        $.ajax({
+		            type: 'POST',
+		            url: url
+		        })
+                .done(function (data) {
+                    QueryStatus();
+                    console.log('Did it ' + data)
+                });
+
+		    }
+
+            // update the buttons setting background color to green if on
+		    function UpdateButton(zone, data) {
+		        if (data) {
+		            $('#' + zone)[0].style.backgroundColor = 'rgb(0,255,0)';
+		            onOffList[zone] = true;
+		        }
+		        else {
+		            $('#' + zone)[0].style.backgroundColor = '';
+		            onOffList[zone] = false;
+                }
+		    }
+
+			
+			function handleClick(evt){
+				var tgt = evt.target;
+				//console.log('original target: '+ tgt);
+				if(tgt.nodeType == 3){
+					tgt = tgt.parentNode;
+				}
+				//console.log('normalized target: '+ tgt);
+				if(tgt.className.indexOf('hitArea') != -1 || tgt.nodeName === 'TD'){ //Safari iOS doesn't support Element.classList methods (as of 2010/09/28)
+				    console.log('you clicked on ' + tgt.innerHTML);
+				    var zone = tgt.innerHTML;
+				    var turnOn = !onOffList[zone];
+				    onOffList[zone] = !onOffList[zone];
+				    turnZoneOnOff(zone, turnOn);
+				}
+			}
+			
+			//attach click handler for each '.delegate'
+			Array.prototype.forEach.call(document.querySelectorAll('.delegate'), function(el){
+			    el.addEventListener('click', handleClick, false);
+                // add a click handler to the table
+			    //console.log('adding click handler to ' + el.nodeName);
+			});
+
+			// check zone status every so often
+			setInterval(function () {
+			    QueryStatus();
+			}, 2500);
+
+		</script>
+	</body>
+</html>

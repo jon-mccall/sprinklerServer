@@ -1,0 +1,7 @@
+﻿{
+  "ProgramRunSpec": "EveryDay",
+  "ProgramRunDays": [],
+  "StartHour": 6,
+  "StartMinute": 0,
+  "ZoneTimes": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 ]
+}
