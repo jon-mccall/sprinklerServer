@@ -31,6 +31,7 @@
 	</head>
 	<body>
 		<div class="holder">
+		  <h1>My title</h1>
             <table>
                 <tr><td>Current Time</td><td><label id="ControllerDatetime">[time]</label></td></tr>
                 <tr><td>Running Zone</td><td><label id="RunningZone">[time]</label></td></tr>
@@ -40,7 +41,7 @@
                 <tr><td>Temps</td><td><label id="ControllerTemps">[time]</label></td></tr>
 
             </table>
-
+<br>
             <button onclick="pauseProgTest()">Pause Program</button>
 		</div>
 
@@ -70,7 +71,7 @@
                         var found = false;
                         for (var isOn in obj.ZonesOn) {
                             zoneOn++;
-                            if (isOn) {
+                            if (isOn === "1") {
                                 found = true;
                                 break;
                             }
