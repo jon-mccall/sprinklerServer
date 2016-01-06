@@ -298,7 +298,9 @@ namespace SprinklerWebServer
             {
                 string[] items = requestUpper.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
                 string cmd = items[1];
-                string param = items[2];
+                string param = null;
+                if(items.Count() > 2)
+                    param = items[2];
                 return new Tuple<string, string>(cmd, param);
             }
             catch (Exception ex)
@@ -362,6 +364,7 @@ namespace SprinklerWebServer
         /// //ZONE/[zone]/on - currently running or not?
         /// //ZONE/[zone]/off - currently running or not?
         /// //PROGRAM/PAUSE/[minutes]  pause current running program for this number of minutes
+        /// //PROGRAM/UNPAUSE  
         /// //PROGRAM/STOP
         /// //PROGRAM/RUNNEXTZONE
         /// //PROGRAM/START/[program index]  run the program at index given (zero based)
@@ -401,34 +404,47 @@ namespace SprinklerWebServer
             }
             else if(requestUpper.StartsWith("/PROGRAM/"))
             {
-                Tuple<string, string> zc = ParseProgramCommand(requestUpper);
-                string cmd = zc.Item1;
-                switch(cmd)
+                try
                 {
-                    case "PAUSE":
-                        urlFound = true;
-                        int minutes = int.Parse(zc.Item2);
-                        programController.PauseProgram(minutes);
-                        responseMsg = "true";
-                        break;
-                    case "STOP":
-                        urlFound = true;
-                        programController.StopProgram();
-                        responseMsg = "true";
-                        break;
-                    case "RUNNEXTZONE":
-                        urlFound = true;
-                        programController.RunNextZone();
-                        responseMsg = "true";
-                        break;
-                    case "START":
-                        urlFound = true;
-                        int progIndex = int.Parse(zc.Item2);
-                        programController.StartProgram(progIndex);
-                        responseMsg = "true";
-                        break;
+                    Tuple<string, string> zc = ParseProgramCommand(requestUpper);
+                    string cmd = zc.Item1;
+                    switch (cmd)
+                    {
+                        case "PAUSE":
+                            urlFound = true;
+                            int minutes = int.Parse(zc.Item2);
+                            programController.PauseProgram(minutes);
+                            responseMsg = "true";
+                            break;
+                        case "UNPAUSE":
+                            urlFound = true;
+                            programController.UnpauseProgram();
+                            responseMsg = "true";
+                            break;
+                        case "STOP":
+                            urlFound = true;
+                            programController.StopProgram();
+                            responseMsg = "true";
+                            break;
+                        case "RUNNEXTZONE":
+                            urlFound = true;
+                            programController.RunNextZone();
+                            responseMsg = "true";
+                            break;
+                        case "START":
+                            urlFound = true;
+                            int progIndex = int.Parse(zc.Item2);
+                            programController.StartProgram(progIndex);
+                            responseMsg = "true";
+                            break;
+                    }
+
                 }
-                
+                catch (Exception ex)
+                {
+                    responseMsg = MakeJsonErrorMsg("Error", ex);
+                    //swallow throw;
+                }         
 
             }
 

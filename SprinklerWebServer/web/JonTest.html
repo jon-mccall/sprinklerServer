@@ -31,7 +31,6 @@
 	</head>
 	<body>
 		<div class="holder">
-		  <h1>My title</h1>
             <table>
                 <tr><td>Current Time</td><td><label id="ControllerDatetime">[time]</label></td></tr>
                 <tr><td>Running Zone</td><td><label id="RunningZone">[time]</label></td></tr>
@@ -41,13 +40,8 @@
                 <tr><td>Temps</td><td><label id="ControllerTemps">[time]</label></td></tr>
 
             </table>
-<br>
-            <br><button onclick="pauseProgTest()">Pause Program</button>
-            <br><button onclick="unpauseProgTest()">Unpause Program</button>
-            <br><button onclick="stopProgTest()">Stop Program</button>
-            <br><button onclick="startProgTest()">Start Program</button>
-            <br><button onclick="nextZoneTest()">Next Zone</button>
 
+            <button onclick="pauseProgTest()">Pause Program</button>
 		</div>
 
 		<script>
@@ -73,14 +67,15 @@
                         //\"ZonesOn\":[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]}"
                         $('#ControllerDatetime').html(obj.CurrentTime);
                         var zoneOn = 0;
-                        var arrayLength = obj.ZonesOn.length;
-                        for (var i = 0; i < arrayLength; i++) {
-                            if (obj.ZonesOn[i] === true) {
-                                zoneOn = i + 1;
+                        var found = false;
+                        for (var isOn in obj.ZonesOn) {
+                            zoneOn++;
+                            if (isOn === "1") {
+                                found = true;
                                 break;
                             }
                         }
-                        if(zoneOn > 0) 
+                        if(found) 
                             $('#RunningZone').html(zoneOn);
                         else
                             $('#RunningZone').html('none');
@@ -99,59 +94,6 @@
 		    function pauseProgTest() {
 		        // post a request to pause for 1 minute
 		        var url = hostAndPort + '/program/pause/1';
-		        $.ajax({
-		            type: 'POST',
-		            url: url
-		        })
-                .done(function (data) {
-                    QueryStatus();
-                    console.log('Did it ' + data)
-                });
-
-		    }
-		    function unpauseProgTest() {
-		        // post a request to unpause
-		        var url = hostAndPort + '/program/unpause';
-		        $.ajax({
-		            type: 'POST',
-		            url: url
-		        })
-                .done(function (data) {
-                    QueryStatus();
-                    console.log('Did it ' + data)
-                });
-
-		    }
-		    function stopProgTest() {
-		        var url = hostAndPort + '/program/stop';
-		        $.ajax({
-		            type: 'POST',
-		            url: url
-		        })
-                .done(function (data) {
-                    QueryStatus();
-                    console.log('Did it ' + data)
-                });
-
-		    }
-
-		    function startProgTest() {
-		        // post a request to start the first program
-		        var url = hostAndPort + '/program/start/0';
-		        $.ajax({
-		            type: 'POST',
-		            url: url
-		        })
-                .done(function (data) {
-                    QueryStatus();
-                    console.log('Did it ' + data)
-                });
-
-		    }
-
-		    function nextZoneTest() {
-		        // post a request to switch from current running zone to the next
-		        var url = hostAndPort + '/program/RUNNEXTZONE';
 		        $.ajax({
 		            type: 'POST',
 		            url: url

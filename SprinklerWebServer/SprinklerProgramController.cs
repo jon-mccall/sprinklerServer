@@ -295,6 +295,19 @@ namespace SprinklerWebServer
 
         }
 
+        public void UnpauseProgram()
+        {
+            if(RunningProgram != null && isPaused)
+            {
+                isPaused = false;
+                ZoneStopTime = ZoneStopTime.AddSeconds(-zonePauseSecondsLeft);
+                if(RunningZone > -1)
+                {
+                    Controller.SetZoneOn(RunningZone);
+                }
+            }
+        }
+
         public int ZoneRunSecondsLeft
         {
             get
