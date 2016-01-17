@@ -52,6 +52,9 @@ namespace SprinklerWebServer
     [DataContract]
     public sealed class SprinklerProgram
     {
+        [DataMember]
+        public int Id { get; set; }
+
         private string name;
         private bool isEnabled;
 
@@ -94,6 +97,8 @@ namespace SprinklerWebServer
                 ZoneTimes.Add(2);
             }
         }
+
+        
 
         [DataMember]
         public RunInterval ProgramRunSpec

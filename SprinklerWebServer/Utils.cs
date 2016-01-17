@@ -70,6 +70,43 @@ namespace SprinklerWebServer
             }
         }
 
+        internal static string SerializeJSonZoneList(List<Zone> zones)
+        {
+            try
+            {
+                MemoryStream stream = new MemoryStream();
+                DataContractJsonSerializer ds = new DataContractJsonSerializer(typeof(List<Zone>));
+                DataContractJsonSerializerSettings s = new DataContractJsonSerializerSettings();
+                ds.WriteObject(stream, zones);
+                string jsonString = Encoding.UTF8.GetString(stream.ToArray());
+                //stream.Close();
+                return jsonString;
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+                //throw;
+            }
+        }
+
+        internal static List<Zone> DeserializeJsonZoneList(string json)
+        {
+            try
+            {
+
+                byte[] arrayOfMyString = Encoding.UTF8.GetBytes(json);
+                MemoryStream stream = new MemoryStream(arrayOfMyString);
+                DataContractJsonSerializer ds = new DataContractJsonSerializer(typeof(List<Zone>));
+                List<Zone> list = (List < Zone > )ds.ReadObject(stream);
+
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
 
         //public static void SaveStringToLocalFile(string filename, string content)
         //{

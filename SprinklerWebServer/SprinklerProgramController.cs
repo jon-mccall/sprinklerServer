@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SprinklerWebServer.Model;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ namespace SprinklerWebServer
 {
     public sealed class SprinklerProgramController
     {
-        public IList<SprinklerProgram> Programs { get; set; }
+        public SprinklerData Data { get; set; }
         public SprinklerProgram RunningProgram { get; set; }
         public int RunningZone { get; set; }
         private DateTime ZoneStopTime { get; set; }
@@ -20,19 +21,21 @@ namespace SprinklerWebServer
         private int zoneRunSecondsLeft = 0;
         private SprinklerValveController Controller;
         private readonly int ZONE_SWITCH_DELAY_MS = 5000;
+        public IList<Zone> ZoneList
+        {
+            get; private set;
+        }
 
         public SprinklerProgramController(SprinklerValveController controller)
         {
             Controller = controller;
+            Data = new SprinklerData();
 
             // load programs
-            Programs = new List<SprinklerProgram>();
             RunningZone = -1;
             ZoneStopTime = DateTime.MinValue;
             isPaused = false;
             ZonePauseStopTime = DateTime.MaxValue;
-
-            Programs.Add(new SprinklerProgram() { Name = "Program1" });
 
             // start controller timer
             IAsyncAction asyncAction2 = Windows.System.Threading.ThreadPool.RunAsync(
@@ -40,6 +43,14 @@ namespace SprinklerWebServer
             {
                 ControllerThread();
             });
+
+            // hard code zone list /names for now
+            // TODO - don't hardcode this
+            ZoneList = new List<Zone>();
+            for (int i = 1; i < 16; i++)
+            {
+                ZoneList.Add(new Zone() { Id = i, IsEnabled = true, Name = String.Format("Zone {0}", i) });
+            }
 
         }
 
@@ -95,7 +106,7 @@ namespace SprinklerWebServer
         private SprinklerProgram StartProgramIfTime()
         {
             DateTime now = DateTime.Now;
-            foreach (SprinklerProgram prog in Programs)
+            foreach (SprinklerProgram prog in Data.Programs)
             {
                 if (!prog.IsEnabled)
                     continue;
@@ -214,13 +225,17 @@ namespace SprinklerWebServer
         /// <param name="index"></param>
         public void StartProgram(int index)
         {
-            if(RunningProgram == null && index < Programs.Count)
+            if(RunningProgram == null )
             {
-                RunningZone = -1;
-                zoneRunSecondsLeft = 0;
-                zonePauseSecondsLeft = 0;
-                isPaused = false;
-                RunningProgram = Programs[index];
+                SprinklerProgram prog = Data.Programs.FirstOrDefault(x => x.Id == index);
+                if (prog != null)
+                {
+                    RunningZone = -1;
+                    zoneRunSecondsLeft = 0;
+                    zonePauseSecondsLeft = 0;
+                    isPaused = false;
+                    RunningProgram = prog;
+                }
             }
         }
 
@@ -345,6 +360,16 @@ namespace SprinklerWebServer
             {
                 isPaused = value;
             }
+        }
+
+        public void SetZoneList(IList<Zone> newList)
+        {
+            // replace current list
+            ZoneList.Clear();
+            ((List<Zone>)ZoneList).AddRange(newList);
+
+            // TODO - save to disk
+
         }
     }
 }

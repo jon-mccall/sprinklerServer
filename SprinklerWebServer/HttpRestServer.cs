@@ -97,15 +97,23 @@ namespace SprinklerWebServer
                     string[] requestParts = { "" };
                     if (requestMethod != null)
                     {
-                        //Beakup the request into it parts
-                        requestMethod = requestMethod.Split('\n')[0];
-                        requestParts = requestMethod.Split(' ');
+                        //Beakup the first line of the request into it parts
+                        requestParts = requestMethod.Split('\n')[0].Split(' ');
                     }
                     //We only respond HTTP GETS and POST methods
                     if (requestParts[0] == "GET" && requestParts.Length > 1)
                         await WriteGetResponseAsync(requestParts[1], output);
                     else if (requestParts[0] == "POST" && requestParts.Length > 1)
-                        await WritePostResponseAsync(requestParts[1], output);
+                    {
+                        // parse out any json
+                        int istart = requestMethod.IndexOf("[{");
+                        int iend = requestMethod.IndexOf("}]");
+                        int len = iend - istart + 2;
+                        string json = null;
+                        if(istart > 0 && len > 0)
+                            json = requestMethod.Substring(istart, len);
+                        await WritePostResponseAsync(requestParts[1], output, json);
+                    }
                     else
                         await WriteMethodNotSupportedResponseAsync(requestParts[0], output);
                 }
@@ -131,6 +139,7 @@ namespace SprinklerWebServer
             //query/status - json object containing datetime, temps, zone on/off list
             ///query/datetime  - current datetime on pi
             //query/temps  - string containing "inside|outside" temps
+            //query/zonelist - returns json containing the list of zones
 
 
             System.Diagnostics.Debug.WriteLine("Get request is: " + request.ToUpper());
@@ -205,11 +214,48 @@ namespace SprinklerWebServer
                             urlFound = true;
                             responseMsg = MakeStatusJson();
                             break;
+                        case "ZONELIST":
+                            urlFound = true;
+                            responseMsg = MakeZoneListJson();
+                            break;
                     }
                 }
             }
             bodyArray = Encoding.UTF8.GetBytes(responseMsg);
             await WriteResponseAsync(request.ToUpper(), responseMsg, urlFound, bodyArray, os);
+        }
+
+        private string MakeZoneListJson()
+        {
+            try
+            {
+                List<Zone> zones = programController.ZoneList as List<Zone>;
+                string json = Utils.SerializeJSonZoneList(zones);
+                return json;
+            }
+            catch (Exception ex)
+            {
+                return MakeJsonErrorMsg("Error getting zone list", ex);
+                // swallow throw;
+            }
+
+        }
+
+
+        private string UpdateZoneList(string json)
+        {
+            try
+            {
+                List<Zone> zones = Utils.DeserializeJsonZoneList(json);
+
+                programController.SetZoneList(zones);
+                return "true";
+            }
+            catch (Exception ex)
+            {
+                return MakeJsonErrorMsg("Error updating zone list", ex);
+                // swallow throw;
+            }
         }
 
         private string MakeStatusJson()
@@ -368,11 +414,13 @@ namespace SprinklerWebServer
         /// //PROGRAM/STOP
         /// //PROGRAM/RUNNEXTZONE
         /// //PROGRAM/START/[program index]  run the program at index given (zero based)
+        /// 
+        /// //SET/ZONELIST   - sets the zone information
         /// </summary>
         /// <param name="request"></param>
         /// <param name="os"></param>
         /// <returns></returns>
-        private async Task WritePostResponseAsync(string request, IOutputStream os)
+        private async Task WritePostResponseAsync(string request, IOutputStream os, string json)
         {
             bool urlFound = false;
             byte[] bodyArray = null;
@@ -445,6 +493,28 @@ namespace SprinklerWebServer
                     responseMsg = MakeJsonErrorMsg("Error", ex);
                     //swallow throw;
                 }         
+
+            }
+            else if (requestUpper.StartsWith("/SET/"))
+            {
+                try
+                {
+                    Tuple<string, string> zc = ParseProgramCommand(requestUpper);
+                    string cmd = zc.Item1;
+                    switch (cmd)
+                    {
+                        case "ZONELIST":
+                            urlFound = true;
+                            responseMsg = UpdateZoneList(json);
+                            break;
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    responseMsg = MakeJsonErrorMsg("Error", ex);
+                    //swallow throw;
+                }
 
             }
 
