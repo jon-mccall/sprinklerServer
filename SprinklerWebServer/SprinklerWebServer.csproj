@@ -157,6 +157,7 @@
     <Content Include="web\sprinkler.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="web\zoneEdit.html" />
     <None Include="DefaultProgram.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
