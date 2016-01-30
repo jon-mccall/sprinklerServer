@@ -182,6 +182,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CloudDataSaver.cs" />
     <Compile Include="HttpRestServer.cs" />
     <Compile Include="Model\SprinklerData.cs" />
     <Compile Include="Model\SprinklerStatus.cs" />

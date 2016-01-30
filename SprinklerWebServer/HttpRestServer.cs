@@ -229,7 +229,8 @@ namespace SprinklerWebServer
         {
             try
             {
-                List<Zone> zones = programController.ZoneList as List<Zone>;
+                List<Zone> zones = new List<Zone>();
+                zones.AddRange(programController.Data.ZoneList);
                 string json = Utils.SerializeJSonZoneList(zones);
                 return json;
             }

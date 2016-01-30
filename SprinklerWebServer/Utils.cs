@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Runtime.Serialization.Json;
 using System.Text;
@@ -12,26 +13,86 @@ namespace SprinklerWebServer
 {
     public static class Utils
     {
-        //public static string SerializeJSon<T>(T t)
-        //{
-        //    try
-        //    {
-        //        MemoryStream stream = new MemoryStream();
-        //        DataContractJsonSerializer ds = new DataContractJsonSerializer(typeof(T));
-        //        DataContractJsonSerializerSettings s = new DataContractJsonSerializerSettings();
-        //        ds.WriteObject(stream, t);
-        //        string jsonString = Encoding.UTF8.GetString(stream.ToArray());
-        //        //stream.Close();
-        //        return jsonString;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return ex.ToString();
-        //        //throw;
-        //    }
-        //}
+        private const string ProgramLogFileName = "Program.log";
 
-        
+        public static void LogLine(string text)
+        {
+            // TODO - make sure log file doesn't get too big
+            string line = string.Format("{0}, {1}\r", DateTime.Now, text);
+            Utils.AppendToLocalFile(ProgramLogFileName, line);
+        }
+
+        public static bool LocalFileExists(string fileName)
+        {
+            IsolatedStorageFile myIsolatedStorage = IsolatedStorageFile.GetUserStoreForApplication();
+            return myIsolatedStorage.FileExists(fileName);
+        }
+
+
+        public static void SaveStringToLocalFile(string filename, string content)
+        {
+            IsolatedStorageFile myIsolatedStorage = IsolatedStorageFile.GetUserStoreForApplication();
+            using (StreamWriter writeFile = new StreamWriter(new IsolatedStorageFileStream(filename, FileMode.Create, FileAccess.Write, myIsolatedStorage)))
+            {
+                writeFile.WriteLine(content);
+            }
+        }
+
+
+        public static void AppendToLocalFile(string filename, string content)
+        {
+            IsolatedStorageFile myIsolatedStorage = IsolatedStorageFile.GetUserStoreForApplication();
+            using (StreamWriter writeFile = new StreamWriter(new IsolatedStorageFileStream(filename, FileMode.OpenOrCreate, FileAccess.Write, myIsolatedStorage)))
+            {
+                writeFile.BaseStream.Position = writeFile.BaseStream.Length;
+                writeFile.WriteLine(content);
+            }
+        }
+
+        public static string ReadStringFromLocalFile(string filename)
+        {
+            IsolatedStorageFile myIsolatedStorage = IsolatedStorageFile.GetUserStoreForApplication();
+            if (myIsolatedStorage.FileExists(filename))
+            {
+                using (StreamReader reader = new StreamReader(new IsolatedStorageFileStream(filename, FileMode.Open, FileAccess.Read, myIsolatedStorage)))
+                {
+                    string text = reader.ReadToEnd();
+                    return text;
+                }
+            }
+            return null;
+        }
+
+        public static string ReadStringFromLocalFileOld(string filename)
+        {
+            try
+            {
+                // reads the contents of file 'filename' in the app's local storage folder and returns it as a string
+
+                // access the local folder
+                StorageFolder local = Windows.Storage.ApplicationData.Current.LocalFolder;
+                // open the file 'filename' for reading
+                Stream stream = local.OpenStreamForReadAsync(filename).Result;
+
+                string text = "";
+                // copy the file contents into the string 'text'
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    text = reader.ReadToEnd();
+                }
+
+                return text;
+
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error reading file: " + ex.Message);
+                return null;
+                //swallow throw;
+            }
+        }
+
+
         public static string SerializeJSonSprinkProg(SprinklerProgram t)
         {
             try
@@ -89,6 +150,41 @@ namespace SprinklerWebServer
             }
         }
 
+        internal static string SerializeJSonSprinklerData(SprinklerData sprinklerData)
+        {
+            try
+            {
+                MemoryStream stream = new MemoryStream();
+                DataContractJsonSerializer ds = new DataContractJsonSerializer(typeof(SprinklerData));
+                DataContractJsonSerializerSettings s = new DataContractJsonSerializerSettings();
+                ds.WriteObject(stream, sprinklerData);
+                string jsonString = Encoding.UTF8.GetString(stream.ToArray());
+                //stream.Close();
+                return jsonString;
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+                //throw;
+            }
+        }
+        internal static SprinklerData DeserializeJsonSprinklerData(string json)
+        {
+            try
+            {
+
+                byte[] arrayOfMyString = Encoding.UTF8.GetBytes(json);
+                MemoryStream stream = new MemoryStream(arrayOfMyString);
+                DataContractJsonSerializer ds = new DataContractJsonSerializer(typeof(SprinklerData));
+                SprinklerData list = (SprinklerData)ds.ReadObject(stream);
+
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
         internal static List<Zone> DeserializeJsonZoneList(string json)
         {
             try

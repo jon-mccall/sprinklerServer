@@ -163,6 +163,7 @@ namespace SprinklerWebServer
         public bool SetZoneOn(int zone)
         {
             try {
+                Utils.LogLine($"Zone {zone}, on");
                 GpioPin pin = mapZoneToPin[zone];
                 pin.Write(GpioPinValue.Low);
                 zoneOffOnList[zone - 1] = true;
@@ -182,6 +183,7 @@ namespace SprinklerWebServer
         /// <returns></returns>
         public bool SetZoneOff(int zone)
         {
+            Utils.LogLine($"Turning Zone {zone} off");
             GpioPin pin = mapZoneToPin[zone];
             pin.Write(GpioPinValue.High);
             zoneOffOnList[zone - 1] = false;

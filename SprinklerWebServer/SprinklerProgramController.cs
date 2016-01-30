@@ -10,6 +10,7 @@ namespace SprinklerWebServer
 {
     public sealed class SprinklerProgramController
     {
+        private const string ZoneListFileName = "ZoneList.json";
         public SprinklerData Data { get; set; }
         public SprinklerProgram RunningProgram { get; set; }
         public int RunningZone { get; set; }
@@ -21,15 +22,23 @@ namespace SprinklerWebServer
         private int zoneRunSecondsLeft = 0;
         private SprinklerValveController Controller;
         private readonly int ZONE_SWITCH_DELAY_MS = 5000;
-        public IList<Zone> ZoneList
-        {
-            get; private set;
-        }
+        //public IList<Zone> ZoneList
+        //{
+        //    get; private set;
+        //}
 
         public SprinklerProgramController(SprinklerValveController controller)
         {
+            Utils.LogLine("------------------------");
+            Utils.LogLine("Sprinkler program started");
             Controller = controller;
-            Data = new SprinklerData();
+            Data = SprinklerData.Load();
+            if(Data == null)
+            {
+                // first time set the default
+                Data = new SprinklerData();
+                Data.SetDefaults();
+            }
 
             // load programs
             RunningZone = -1;
@@ -44,13 +53,24 @@ namespace SprinklerWebServer
                 ControllerThread();
             });
 
-            // hard code zone list /names for now
-            // TODO - don't hardcode this
-            ZoneList = new List<Zone>();
-            for (int i = 1; i < 16; i++)
-            {
-                ZoneList.Add(new Zone() { Id = i, IsEnabled = true, Name = String.Format("Zone {0}", i) });
-            }
+            //if (Utils.LocalFileExists(ZoneListFileName))
+            //{
+            //    string json = Utils.ReadStringFromLocalFile(ZoneListFileName);
+            //    if (json != null && json.Length > 0)
+            //    {
+            //        ZoneList = Utils.DeserializeJsonZoneList(json);
+            //    }
+            //}
+
+            //if (ZoneList == null || ZoneList.Count == 0)
+            //{
+            //    // hard code zone list /names if the data file does not exist
+            //    ZoneList = new List<Zone>();
+            //    for (int i = 1; i < 16; i++)
+            //    {
+            //        ZoneList.Add(new Zone() { Id = i, IsEnabled = true, Name = String.Format("Zone {0}", i) });
+            //    }
+            //}
 
         }
 
@@ -365,11 +385,12 @@ namespace SprinklerWebServer
         public void SetZoneList(IList<Zone> newList)
         {
             // replace current list
-            ZoneList.Clear();
-            ((List<Zone>)ZoneList).AddRange(newList);
+            Data.ZoneList = newList;
+            //Data.ZoneList.Clear();
+            //((List<Zone>)Data.ZoneList).AddRange(newList);
 
-            // TODO - save to disk
-
+            // save to disk
+            Data.Save();
         }
     }
 }

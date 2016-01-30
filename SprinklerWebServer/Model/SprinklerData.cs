@@ -10,33 +10,70 @@ namespace SprinklerWebServer.Model
     [DataContract]
     public sealed class SprinklerData
     {
+        private const string SprinklerFileName = "SprinklerSetup.json";
+
         [DataMember]
         public IList<SprinklerProgram> Programs { get; set; }
 
         [DataMember]
-        public IList<Zone> Zones { get; set; }
+        public IList<Zone> ZoneList { get; set; }
 
         public SprinklerData()
+        {
+        }
+
+        public static SprinklerData Load()
+        {
+            if (Utils.LocalFileExists(SprinklerFileName))
+            {
+                string json = Utils.ReadStringFromLocalFile(SprinklerFileName);
+                if (json != null && json.Length > 0)
+                {
+                    SprinklerData data = Utils.DeserializeJsonSprinklerData(json);
+                    return data;
+                }
+            }
+            return null;
+        }
+
+        public void Save()
+        {
+            string json = Utils.SerializeJSonSprinklerData(this);
+            Utils.SaveStringToLocalFile(SprinklerFileName, json);
+
+        }
+
+        public void SetDefaults()
         {
             Programs = new List<SprinklerProgram>();
             Programs.Add(new SprinklerProgram() { Name = "Program1", Id = 1 });
 
-            Zones = new List<Zone>();
-            Zones.Add(new Zone() { IsEnabled = true, Name = "1" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "2" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "3" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "4" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "5" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "6" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "7" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "8" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "9" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "10" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "11" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "12" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "13" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "14" });
-            Zones.Add(new Zone() { IsEnabled = true, Name = "15" });
+            // hard code zone list /names if the data file does not exist
+            ZoneList = new List<Zone>();
+            for (int i = 1; i < 16; i++)
+            {
+                ZoneList.Add(new Zone() { Id = i, IsEnabled = true, Name = String.Format("Zone {0}", i) });
+            }
+
+            //if (Utils.LocalFileExists(ZoneListFileName))
+            //{
+            //    string json = Utils.ReadStringFromLocalFile(ZoneListFileName);
+            //    if (json != null && json.Length > 0)
+            //    {
+            //        ZoneList = Utils.DeserializeJsonZoneList(json);
+            //    }
+            //}
+
+            //if (ZoneList == null || ZoneList.Count == 0)
+            //{
+            //    // hard code zone list /names if the data file does not exist
+            //    ZoneList = new List<Zone>();
+            //    for (int i = 1; i < 16; i++)
+            //    {
+            //        ZoneList.Add(new Zone() { Id = i, IsEnabled = true, Name = String.Format("Zone {0}", i) });
+            //    }
+            //}
+
         }
     }
 }
