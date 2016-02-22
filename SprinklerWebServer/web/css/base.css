@@ -31,6 +31,15 @@ body {
   color: #475B62;
 }
  
+label {
+  font-family: "Exo 2", "Helvetica Neue", Helvetica, sans-serif;
+  font-weight: 300;
+  font-size: .8em;
+  line-height: .8em;
+  background: #FDF6E3;
+  color: #475B62;
+}
+
 strong {
   font-weight: 600;
 }

@@ -12,12 +12,12 @@
 
     <title>Pi Controller</title>
       <style>
- .navbar { min-height:38px;   }
+ /*.navbar { min-height:38px;   }
  .navbar .navbar-brand{ padding: 0 12px;font-size: 16px;line-height: 38px;height: 38px; }
  .navbar .navbar-nav > li > a {  padding-top: 0px; padding-bottom: 0px; line-height: 38px; }
  .navbar .navbar-toggle {  margin-top: 3px; margin-bottom: 0px; padding: 8px 9px; }
  .navbar .navbar-form { margin-top: 2px; margin-bottom: 0px }
- .navbar .navbar-collapse {border-color: #A40303;}
+ .navbar .navbar-collapse {border-color: #A40303;}*/
 
           /*.navbar-primary .navbar { background:#819090; border-bottom:none; }
 .navbar-primary .navbar .nav > li > a {color: #475B62;}
@@ -46,20 +46,26 @@
       <script src="./js/bootstrap.min.js"></script>
       <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
       <script src="./js/ie10-viewport-bug-workaround.js"></script>
-
+      <script src="./js/base.js"></script>
       <script type="text/javascript">
           $(document).ready(function () {
+              // set default page on load
+              $("#Content").load("./test.html");
+
+              //  navagation click handler to switch pages
               $('.nav a').on('click', function () {
-                  srcUrl = $(this).attr('src');
-                  $("#Content").attr("src", srcUrl);
-                  $(".navbar-collapse").collapse('hide');
-              });
-          });
+                    srcUrl = $(this).attr('src');
+                    $("#Content").load(srcUrl);
+                    //$("#Content").attr("src", srcUrl);
+                    $(".navbar-collapse").collapse('hide');
+                });
+            });
 
       </script>
   </head>
   <body>
-    <nav class="navbar navbar-inverse navbar-static-top" style="margin-bottom:0px">
+    <nav class="navbar navbar-inverse navbar-fixed-top"> <!--style="margin-bottom:0px; height:50px;">-->
+    <!--<nav class="navbar navbar-default navbar-fixed-top">-->
       <div class="container">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" 
@@ -78,17 +84,21 @@
               <li><a href="#" src="./configure.html">Configure</a></li>
               <li><a href="#" src="./logs.html">Logs</a></li>
               <li><a href="#" src="./zoneEdit.html">Zone Edit</a></li>
+              <li><a href="#" src="./programList.html">Program</a></li>
               <li><a href="#" src="./d3Test.html">d3 Test</a></li>
           </ul>
         </div>
       </div>
       
     </nav>
-      <div>
-          <iframe id="Content" class="embed-responsive-item" src="./test.html" scrolling="auto" style="position:fixed; 
+      <div class="container">
+          <div id="Content" class="embed-responsive-item" style="margin-top:55px;">
+
+          </div>
+          <!--<iframe id="Content" class="embed-responsive-item" src="./test.html" scrolling="auto" style="position:fixed; 
                 left:0px; right:0px; width:100%; height:100%; border:none; overflow:hidden; z-index:999999;">
               Your browser doesn't support iframes>
-          </iframe>
+          </iframe>-->
       </div><!-- /.container -->
   </body>
 </html>

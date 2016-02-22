@@ -104,6 +104,8 @@
 
             // update the buttons setting background color to green if on
 		    function UpdateButton(zone, data) {
+		        if ($('#' + zone)[0] === undefined)
+		            return;
 		        if (data) {
 		            $('#' + zone)[0].style.backgroundColor = 'rgb(0,255,0)';
 		            onOffList[zone] = true;
