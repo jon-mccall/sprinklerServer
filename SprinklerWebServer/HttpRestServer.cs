@@ -140,6 +140,8 @@ namespace SprinklerWebServer
             ///query/datetime  - current datetime on pi
             //query/temps  - string containing "inside|outside" temps
             //query/zonelist - returns json containing the list of zones
+            //query/programdata - returns json containing the list of programs (includes zonelist also!)
+
 
 
             System.Diagnostics.Debug.WriteLine("Get request is: " + request.ToUpper());
@@ -218,11 +220,34 @@ namespace SprinklerWebServer
                             urlFound = true;
                             responseMsg = MakeZoneListJson();
                             break;
+                        case "LOGS":
+                            urlFound = true;
+                            responseMsg = ReturnLogFile();
+                            break;
+                        case "PROGRAMDATA":
+                            urlFound = true;
+                            responseMsg = MakeProgramSettingsJson();
+                            break;
+
                     }
                 }
             }
             bodyArray = Encoding.UTF8.GetBytes(responseMsg);
             await WriteResponseAsync(request.ToUpper(), responseMsg, urlFound, bodyArray, os);
+        }
+
+        private string ReturnLogFile()
+        {
+            try
+            {
+                return Utils.ReadLogFile();
+
+            }
+            catch (Exception ex)
+            {
+                return MakeJsonErrorMsg("Error getting zone list", ex);
+                // swallow throw;
+            }
         }
 
         private string MakeZoneListJson()
@@ -242,6 +267,35 @@ namespace SprinklerWebServer
 
         }
 
+        private string MakeProgramSettingsJson()
+        {
+            try
+            {
+                string json = Utils.SerializeJSonSprinklerData(programController.Data);
+                return json;
+            }
+            catch (Exception ex)
+            {
+                return MakeJsonErrorMsg("Error getting program list", ex);
+                // swallow throw;
+            }
+        }
+
+        private string MakeProgramListJson()
+        {
+            try
+            {
+                List<SprinklerProgram> programs = new List<SprinklerProgram>();
+                programs.AddRange(programController.Data.Programs);
+                string json = Utils.SerializeJSonProgramList(programs);
+                return json;
+            }
+            catch (Exception ex)
+            {
+                return MakeJsonErrorMsg("Error getting program list", ex);
+                // swallow throw;
+            }
+        }
 
         private string UpdateZoneList(string json)
         {
@@ -250,6 +304,22 @@ namespace SprinklerWebServer
                 List<Zone> zones = Utils.DeserializeJsonZoneList(json);
 
                 programController.SetZoneList(zones);
+                return "true";
+            }
+            catch (Exception ex)
+            {
+                return MakeJsonErrorMsg("Error updating zone list", ex);
+                // swallow throw;
+            }
+        }
+
+        private string UpdateProgramData(string json)
+        {
+            try
+            {
+                SprinklerData data = Utils.DeserializeJsonSprinklerData(json);
+
+                programController.SetSprinklerData(data);
                 return "true";
             }
             catch (Exception ex)
@@ -417,6 +487,7 @@ namespace SprinklerWebServer
         /// //PROGRAM/START/[program index]  run the program at index given (zero based)
         /// 
         /// //SET/ZONELIST   - sets the zone information
+        /// //SET/PROGRAMDATA  - sets the program data
         /// </summary>
         /// <param name="request"></param>
         /// <param name="os"></param>
@@ -486,6 +557,13 @@ namespace SprinklerWebServer
                             programController.StartProgram(progIndex);
                             responseMsg = "true";
                             break;
+                        //case "ENABLE":
+                        //    urlFound = true;
+                        //    // need program id!!!
+                        //    Boolean ON = bool.Parse (zc.Item2);
+                        //    programController.EnableProgram(on);
+                        //    responseMsg = "true";
+                        //    break;
                     }
 
                 }
@@ -507,6 +585,10 @@ namespace SprinklerWebServer
                         case "ZONELIST":
                             urlFound = true;
                             responseMsg = UpdateZoneList(json);
+                            break;
+                        case "PROGRAMDATA":
+                            urlFound = true;
+                            responseMsg = UpdateProgramData(json);
                             break;
                     }
 

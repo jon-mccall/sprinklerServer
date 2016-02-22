@@ -39,6 +39,10 @@ namespace SprinklerWebServer
                 Data = new SprinklerData();
                 Data.SetDefaults();
             }
+            //// TODO remove test!!!!
+            //if(Data.Programs.Count == 1)
+            //    Data.AddProgram("Program2");
+
 
             // load programs
             RunningZone = -1;
@@ -381,6 +385,17 @@ namespace SprinklerWebServer
                 isPaused = value;
             }
         }
+
+        internal void SetSprinklerData(SprinklerData data)
+        {
+            // replace current Program Data
+            Data.Programs = new List<SprinklerProgram>(data.Programs);
+
+            // save to disk
+            Data.Save();
+        }
+
+
 
         public void SetZoneList(IList<Zone> newList)
         {

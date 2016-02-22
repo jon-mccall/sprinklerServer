@@ -30,6 +30,8 @@ namespace SprinklerWebServer.Model
                 if (json != null && json.Length > 0)
                 {
                     SprinklerData data = Utils.DeserializeJsonSprinklerData(json);
+                    // make sure the list of programs is editable...
+                    data.Programs = new List<SprinklerProgram>(data.Programs);
                     return data;
                 }
             }
@@ -43,10 +45,18 @@ namespace SprinklerWebServer.Model
 
         }
 
+        public int AddProgram(string name)
+        {
+            int id = Programs.Max(x => x.Id) + 1;
+            Programs.Add(new SprinklerProgram() { Name = name, Id = id });
+            return id;
+        }
+
         public void SetDefaults()
         {
             Programs = new List<SprinklerProgram>();
             Programs.Add(new SprinklerProgram() { Name = "Program1", Id = 1 });
+            Programs.Add(new SprinklerProgram() { Name = "Program2", Id = 2 });
 
             // hard code zone list /names if the data file does not exist
             ZoneList = new List<Zone>();

@@ -18,8 +18,20 @@ namespace SprinklerWebServer
         public static void LogLine(string text)
         {
             // TODO - make sure log file doesn't get too big
-            string line = string.Format("{0}, {1}\r", DateTime.Now, text);
+            string line = string.Format("{0}, {1}\n", DateTime.Now, text);
             Utils.AppendToLocalFile(ProgramLogFileName, line);
+        }
+
+        internal static string ReadLogFile()
+        {
+            try
+            {
+                return ReadStringFromLocalFile(ProgramLogFileName);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
 
         public static bool LocalFileExists(string fileName)
@@ -63,34 +75,34 @@ namespace SprinklerWebServer
             return null;
         }
 
-        public static string ReadStringFromLocalFileOld(string filename)
-        {
-            try
-            {
-                // reads the contents of file 'filename' in the app's local storage folder and returns it as a string
+        //public static string ReadStringFromLocalFileOld(string filename)
+        //{
+        //    try
+        //    {
+        //        // reads the contents of file 'filename' in the app's local storage folder and returns it as a string
 
-                // access the local folder
-                StorageFolder local = Windows.Storage.ApplicationData.Current.LocalFolder;
-                // open the file 'filename' for reading
-                Stream stream = local.OpenStreamForReadAsync(filename).Result;
+        //        // access the local folder
+        //        StorageFolder local = Windows.Storage.ApplicationData.Current.LocalFolder;
+        //        // open the file 'filename' for reading
+        //        Stream stream = local.OpenStreamForReadAsync(filename).Result;
 
-                string text = "";
-                // copy the file contents into the string 'text'
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    text = reader.ReadToEnd();
-                }
+        //        string text = "";
+        //        // copy the file contents into the string 'text'
+        //        using (StreamReader reader = new StreamReader(stream))
+        //        {
+        //            text = reader.ReadToEnd();
+        //        }
 
-                return text;
+        //        return text;
 
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Error reading file: " + ex.Message);
-                return null;
-                //swallow throw;
-            }
-        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        System.Diagnostics.Debug.WriteLine("Error reading file: " + ex.Message);
+        //        return null;
+        //        //swallow throw;
+        //    }
+        //}
 
 
         public static string SerializeJSonSprinkProg(SprinklerProgram t)
@@ -202,6 +214,27 @@ namespace SprinklerWebServer
                 throw;
             }
         }
+
+        internal static string SerializeJSonProgramList(List<SprinklerProgram> programs)
+        {
+            try
+            {
+                MemoryStream stream = new MemoryStream();
+                DataContractJsonSerializer ds = new DataContractJsonSerializer(typeof(List<SprinklerProgram>));
+                DataContractJsonSerializerSettings s = new DataContractJsonSerializerSettings();
+                ds.WriteObject(stream, programs);
+                string jsonString = Encoding.UTF8.GetString(stream.ToArray());
+                //stream.Close();
+                return jsonString;
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+                //throw;
+            }
+        }
+
+
 
 
         //public static void SaveStringToLocalFile(string filename, string content)
