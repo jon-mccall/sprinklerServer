@@ -155,6 +155,11 @@ namespace SprinklerWebServer
             //why path.combine not working????
             //string sPhysicalFilePath = Path.Combine(sMyWebServerRoot, sfile);
             string sPhysicalFilePath = String.Format("{0}{1}", sMyWebServerRoot, sfile);
+            // some requests have ?_12341234 attached, remove that
+            if(sPhysicalFilePath.Contains("?"))
+            {
+                sPhysicalFilePath = sPhysicalFilePath.Substring(0, sPhysicalFilePath.IndexOf('?'));
+            }
 
             //System.Diagnostics.Debug.WriteLine("File Requested : " + sRequestedFile);
 
