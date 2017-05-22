@@ -92,7 +92,7 @@ namespace SprinklerWebServer
             DateTime test = DateTime.Now.AddSeconds(70);
             StartHour = test.Hour;
             StartMinute = test.Minute;
-            for (int i = 0; i < 14; i++)
+            for (int i = 0; i < 15; i++)
             {
                 ZoneTimes.Add(2);
             }

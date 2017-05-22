@@ -32,6 +32,34 @@ namespace SprinklerWebServer.Model
                     SprinklerData data = Utils.DeserializeJsonSprinklerData(json);
                     // make sure the list of programs is editable...
                     data.Programs = new List<SprinklerProgram>(data.Programs);
+                    // TODO - remove test code....
+                    if(data.Programs[0].ZoneTimes[0] == 2)
+                    {
+                        // its a default setup, change it!
+                        if(data.Programs.Count > 1)
+                        {
+                            data.Programs.RemoveAt(1);
+                        }
+                        data.Programs[0].StartHour = 6;
+                        data.Programs[0].StartMinute = 50;
+                        data.Programs[0].ZoneTimes[0] = 45;
+                        data.Programs[0].ZoneTimes[1] = 45;
+                        data.Programs[0].ZoneTimes[2] = 45;
+                        data.Programs[0].ZoneTimes[3] = 45;
+                        data.Programs[0].ZoneTimes[4] = 45;
+                        data.Programs[0].ZoneTimes[5] = 5;
+                        data.Programs[0].ZoneTimes[6] = 45;
+                        data.Programs[0].ZoneTimes[7] = 45;
+                        data.Programs[0].ZoneTimes[8] = 45;
+                        data.Programs[0].ZoneTimes[9] = 45;
+                        data.Programs[0].ZoneTimes[10] = 45;
+                        data.Programs[0].ZoneTimes[11] = 45;
+                        data.Programs[0].ZoneTimes[12] = 45;
+                        data.Programs[0].ZoneTimes[13] = 0;
+                        //data.Programs[0].ZoneTimes[14] = 0;
+                        //data.Programs[0].ZoneTimes[15] = 0;
+
+                    }
                     return data;
                 }
             }
