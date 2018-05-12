@@ -18,7 +18,7 @@ namespace SprinklerWebServer
         AppServiceConnection appServiceConnection;
         SprinklerValveController valveController;
         SprinklerProgramController programController;
-        CloudDataSaver cloudDataSaver;
+        //CloudDataSaver cloudDataSaver;
 
         //TemperatureSensors tempSensors;
 
@@ -93,7 +93,7 @@ namespace SprinklerWebServer
         {
             valveController = new SprinklerValveController();
             programController = new SprinklerProgramController(valveController);
-            cloudDataSaver = new CloudDataSaver();
+            //cloudDataSaver = new CloudDataSaver();
 
             //Define a new instance of our HTTPServer on Port 8888
             HttpRestServer server = new HttpRestServer(8888, appServiceConnection, valveController, programController);//, tempSensors);

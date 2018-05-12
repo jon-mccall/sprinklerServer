@@ -93,6 +93,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
+    <Content Include="web\activeSprinklersMap.html" />
     <Content Include="web\configure.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -106,6 +107,20 @@
     <Content Include="web\images\lighton.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="web\images\Map\1.png" />
+    <Content Include="web\images\Map\10.png" />
+    <Content Include="web\images\Map\11.png" />
+    <Content Include="web\images\Map\12.png" />
+    <Content Include="web\images\Map\13.png" />
+    <Content Include="web\images\Map\2.png" />
+    <Content Include="web\images\Map\3.png" />
+    <Content Include="web\images\Map\4.png" />
+    <Content Include="web\images\Map\5.png" />
+    <Content Include="web\images\Map\6.png" />
+    <Content Include="web\images\Map\7.png" />
+    <Content Include="web\images\Map\8.png" />
+    <Content Include="web\images\Map\9.png" />
+    <Content Include="web\images\Map\YardWithSprinklers.png" />
     <Content Include="web\images\poolpumpoff.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

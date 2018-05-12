@@ -1,0 +1,291 @@
+﻿<!doctype html>
+<html>
+	<head>
+		<title>Active Sprinklers Map</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="./css/base.css">
+
+        <script src="./js/jquery-2.1.3.min.js"></script>
+        <script src="./js/bootstrap.min.js"></script>
+        <script src="./js/d3.min.js"></script>
+		<script src="./js/base.js"></script>
+        <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+        <script src="./js/ie10-viewport-bug-workaround.js"></script>
+		<style>
+		#chart svg image {
+			x: 0;
+			y: 0;
+			width: 400px;
+			height: 400px;  
+		}
+		
+		
+		</style>
+
+	</head>
+	<body>
+		<div class="container">
+            <h2>Active Sprinklers Map</h2>
+            <!--<img src="./images/lawn.png" alt="lawn">-->
+            <section id="chart">
+                
+            </section>
+            
+ 		</div>
+
+        <script src="./js/base.js"></script>
+		<script>
+		
+	function QueryStatus() {
+		        var url = hostAndPort + '/query/status';
+		        $.ajax({
+		            type: 'GET',
+		            url: url
+		        })
+                .done(function (data) {
+                    var obj = JSON.parse(data);
+                    if (obj.isError) {
+                        // todo - display the error here
+                        console.log('Error detected ' + obj)
+                    }
+                    else {
+                        //"{\"CurrentTime\":\"1\\/2\\/2016 8:09:41 PM\",\"InsideTemp\":\"67.89\",\"OutsideTemp\":\"-196.60\",\"ZoneRunSecondsLeft\":0,
+                        //\"ZonesOn\":[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]}"
+                        SwapZoneImages(obj.ZonesOn);
+                    }
+					
+                });
+				
+		    }
+		 
+		 function SwapZoneImages(list) {
+		        for (i = 0; i < list.length; i++) {
+		            UpdateImage(i + 1, list[i]);
+                }
+		    }
+			// Zone = Zone ID Number, Data = True or False (Running or Not Running)
+		 function UpdateImage(zone, data) {
+		        if ($('#Set' + zone)[0] === undefined)
+		            return;
+		        if (data) {
+		          $('#Set' + zone)[0].style.display = ''
+				  onOffList[zone] = true;
+		        }
+		        else {
+		         $('#Set' + zone)[0].style.display = 'none'
+				 onOffList[zone] = false;
+                }
+		    }
+		
+		
+		var svg = d3.select('#chart').append('svg')
+			.attr('width', 400)
+			.attr('height', 400)
+			.style('background', '#c9d7d6')
+           
+		svg.append('image')
+			.attr('xlink:href', './images/Map/YardWithSprinklers.png')
+							
+		for (i = 1; i < 14; i++) {
+			svg.append('image')
+				.attr('xlink:href', './images/Map/'+i+'.png')
+				.style('display', 'none')
+				.attr("id", "Set"+i)
+		}
+			
+			
+			//Set 6
+			d3.select('svg')
+                .append('rect')
+				.attr('x', 35)
+				.attr('y', 125)
+				.attr('width', 80)
+				.attr('height', 70)
+				.style('fill', 'blue')
+				.style("opacity", 0.0)
+				.attr("id", "B6")
+					
+			//Set 1
+			d3.select('svg')
+                .append('polyline')
+                .attr('points', '0 30, 20 210, 60 130')
+                .style('fill', 'blue')
+				.style("opacity", 0.0)
+				.attr("id", "B1")
+			
+			//Set 2
+			d3.select('svg')
+                .append('polyline')
+                .attr('points', '20 60, 120 170, 135 110')
+                .style('fill', 'blue')
+				.style("opacity", 0.0)
+				.attr("id", "B2")
+				
+			//Set 3
+			d3.select('svg')
+                .append('rect')
+                    .attr('x', 135)
+                    .attr('y', 125)
+                    .attr('width', 70)
+                    .attr('height', 70)
+                    .style('fill', 'blue')
+					.style("opacity", 0.0)
+					.attr("id", "B3")
+				
+			//Set 4
+			d3.select('svg')
+                .append('rect')
+                    .attr('x', 0)
+                    .attr('y', 195)
+                    .attr('width', 155)
+                    .attr('height', 45)
+                    .style('fill', 'blue')
+					.style("opacity", 0.0)
+					.attr("id", "B4")
+					
+			//Set 5
+			d3.select('svg')
+                .append('rect')
+                    .attr('x', 0)
+                    .attr('y', 240)
+                    .attr('width', 160)
+                    .attr('height', 30)
+                    .style('fill', 'blue')
+					.style("opacity", 0.0)
+					.attr("id", "B5")
+					
+					//Set 7
+			d3.select('svg')
+                .append('rect')
+                    .attr('x', 0)
+                    .attr('y', 270)
+                    .attr('width', 160)
+                    .attr('height', 30)
+                    .style('fill', 'blue')
+					.style("opacity", 0.0)
+					.attr("id", "B7")
+					
+					//Set 8
+			d3.select('svg')
+                .append('rect')
+                    .attr('x', 160)
+                    .attr('y', 210)
+                    .attr('width', 120)
+                    .attr('height', 50)
+                    .style('fill', 'blue')
+					.style("opacity", 0.0)
+					.attr("id", "B8")
+					
+					//Set 9
+			d3.select('svg')
+                .append('rect')
+                    .attr('x', 160)
+                    .attr('y', 260)
+                    .attr('width', 150)
+                    .attr('height', 30)
+                    .style('fill', 'blue')
+					.style("opacity", 0.0)
+					.attr("id", "B9")
+					
+					//Set 10
+			d3.select('svg')
+                .append('rect')
+                    .attr('x', 0)
+                    .attr('y', 300)
+                    .attr('width', 165)
+                    .attr('height', 25)
+                    .style('fill', 'blue')
+					.style("opacity", 0.0)
+					.attr("id", "B10")
+					
+					//Set 11
+			d3.select('svg')
+                .append('rect')
+                    .attr('x', 180)
+                    .attr('y', 290)
+                    .attr('width', 180)
+                    .attr('height', 30)
+                    .style('fill', 'blue')
+					.style("opacity", 0.0)
+					.attr("id", "B11")
+					
+					//Set 12
+			d3.select('svg')
+                .append('rect')
+                    .attr('x', 0)
+                    .attr('y', 325)
+                    .attr('width', 160)
+                    .attr('height', 20)
+                    .style('fill', 'blue')
+					.style("opacity", 0.0)
+					.attr("id", "B12")
+					
+					//Set 13
+			d3.select('svg')
+                .append('rect')
+                    .attr('x', 180)
+                    .attr('y', 320)
+                    .attr('width', 180)
+                    .attr('height', 30)
+                    .style('fill', 'blue')
+					.style("opacity", 0.0)
+					.attr("id", "B13")
+
+				
+			//setup buttons defining what they do on click
+			for (i = 0; i < onOffList.length; i++) {
+				var button = d3.select ("#B"+(i+1))
+				button.on('click', handleButtonClick);
+				var value = i;
+			}
+			
+			function handleButtonClick(evt) {
+				console.log('button' +this.id+ 'pressed');
+				var zone = this.id.substring(1,3)
+				var turnOn = !onOffList[zone];
+				onOffList[zone] = !onOffList[zone];
+				turnZoneOnOff(zone, turnOn);
+				
+			}
+			
+			function turnZoneOnOff(zone, turnOn) {
+		        // post a request to turn a zone on/off
+		        var url = hostAndPort + '/zone/' + zone;
+		        if (turnOn)
+		            url = url + '/ON';
+		        else
+		            url = url + '/OFF';
+
+		        $.ajax({
+		            type: 'POST',
+		            url: url
+		        })
+                .done(function (data) {
+                    QueryStatus();
+                    console.log('Did it ' + data)
+                });
+
+		    }
+
+			
+			//var button = d3.select ('#Button1')
+				//console.log('#Button1'+button)
+				//button.on('click', fuction(){
+				//console.log('i was clicked')
+				//});
+
+            //var hostAndPort = "http://minwinpc:8888";
+            // seems like the iphone likes the ip address better...
+		    var hostAndPort = "http://192.168.1.200:8888";
+		    var onOffList = new Array(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
+
+
+			//// check zone status every so often
+			setInterval(function () {
+			    QueryStatus();
+			}, 2500);
+
+		</script>
+	</body>
+</html>
