@@ -1,0 +1,182 @@
+﻿<!doctype html>
+<html>
+<head>
+    <title>Sprinkler Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./css/base.css">
+    <!--<script src="./js/jquery-2.1.3.min.js"></script>-->
+    <script src="./js/jquery-2.1.3.min.js"></script>
+    <script src="./js/bootstrap.min.js"></script>
+    <script src="./js/base.js"></script>
+    <style>
+
+    </style>
+</head>
+	<body>
+        <div class="container" style="position:relative;">
+            <h2>Sprinklers Map</h2>
+            <img src="./images/Map/YardWithSprinklers.png" alt="lawn" style="position:absolute; top:50px; left:0px;" onclick="mapClicked(event)">
+            <img src="./images/Map/1.png" id="set1" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/2.png" id="set2" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/3.png" id="set3" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/4.png" id="set4" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/5.png" id="set5" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/6.png" id="set6" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/7.png" id="set7" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/8.png" id="set8" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/9.png" id="set9" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/10.png" id="set10" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/11.png" id="set11" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/12.png" id="set12" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/13.png" id="set13" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+
+        </div>
+
+        <script src="./js/base.js"></script>
+		<script>
+            function mapClicked(e) {
+                //alert("you clicked the map " + e.layerX + ", " + e.layerY)
+                console.log("you clicked the map " + e.layerX + ", " + e.layerY)
+                point = [e.layerX, e.layerY]
+
+                poly1 = [[0, 0], [40, 0], [50, 160], [0, 200]]
+                poly2 = [[40, 0], [100, 0], [200, 75], [165, 165]]
+                poly3 = [[190, 90], [290, 90], [300, 200], [185, 200]]
+                poly4 = [[0, 220], [185, 200], [225, 260], [0, 220]]
+                poly5 = [[0, 260], [225, 260], [225,300], [0,300]]
+                poly6 = [[65, 142], [140, 125], [165, 190], [62, 230]]
+                poly7 = [[0, 300], [225, 300], [225, 345], [0, 345]]
+                poly8 = [[230,225], [380,225], [380,295], [230,295]]
+                poly9 = [[230,295], [425,295], [425,335], [230,335]]
+                poly10 = [[0, 345], [225, 345], [225, 380], [0, 380]]
+                poly11 = [[230,335], [500,335], [500,380], [230,380]]
+                poly12 = [[0, 380], [225, 380], [225, 415], [0, 415]]
+                poly13 = [[230, 380], [500, 380], [500, 415], [230, 415]]
+                polies = [poly1, poly2, poly3, poly4, poly5, poly6,
+                            poly7, poly8, poly9, poly10, poly11, poly12, poly13];
+
+                for (i = 0; i < polies.length; i++) {
+                    poly = polies[i];
+                    // check for hit on a zone
+                    if (pointInPolygon(poly, point) ) {
+                        zone = i + 1;
+                        console.log("You clicked zone " + zone + " which was " + onOffList[zone]);
+
+                        var turnOn = !onOffList[zone];
+                        onOffList[zone] = !onOffList[zone];
+                        turnZoneOnOff(zone, turnOn);
+                        break;
+                    }
+                }
+            }	
+
+            /**
+             * Performs the even-odd-rule Algorithm (a raycasting algorithm) to find out whether a point is in a given polygon.
+             * This runs in O(n) where n is the number of edges of the polygon.
+             *
+             * @param {Array} polygon an array representation of the polygon where polygon[i][0] is the x Value of the i-th point and polygon[i][1] is the y Value.
+             * @param {Array} point   an array representation of the point where point[0] is its x Value and point[1] is its y Value
+             * @return {boolean} whether the point is in the polygon (not on the edge, just turn < into <= and > into >= for that)
+             */
+            const pointInPolygon = function (polygon, point) {
+                //A point is in a polygon if a line from the point to infinity crosses the polygon an odd number of times
+                let odd = false;
+                //For each edge (In this case for each point of the polygon and the previous one)
+                for (let i = 0, j = polygon.length - 1; i < polygon.length; i++) {
+                    //If a line from the point into infinity crosses this edge
+                    if (((polygon[i][1] > point[1]) !== (polygon[j][1] > point[1])) // One point needs to be above, one below our y coordinate
+                        // ...and the edge doesn't cross our Y corrdinate before our x coordinate (but between our x coordinate and infinity)
+                        && (point[0] < ((polygon[j][0] - polygon[i][0]) * (point[1] - polygon[i][1]) / (polygon[j][1] - polygon[i][1]) + polygon[i][0]))) {
+                        // Invert odd
+                        odd = !odd;
+                    }
+                    j = i;
+
+                }
+                //If the number of crossings was odd, the point is in the polygon
+                return odd;
+            };
+
+            //module.exports = { pointInPolygon }
+
+	    function QueryStatus() {
+		        var url = hostAndPort + '/query/status';
+		        $.ajax({
+		            type: 'GET',
+		            url: url
+		        })
+                .done(function (data) {
+                    var obj = JSON.parse(data);
+                    if (obj.isError) {
+                        // todo - display the error here
+                        console.log('Error detected ' + obj)
+                    }
+                    else {
+                        //"{\"CurrentTime\":\"1\\/2\\/2016 8:09:41 PM\",\"InsideTemp\":\"67.89\",\"OutsideTemp\":\"-196.60\",\"ZoneRunSecondsLeft\":0,
+                        //\"ZonesOn\":[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]}"
+                        SwapZoneImages(obj.ZonesOn);
+                    }
+					
+                });
+				
+		    }
+
+
+
+		 function SwapZoneImages(list) {
+		        for (i = 0; i < list.length; i++) {
+		            UpdateImage(i + 1, list[i]);
+                }
+            }
+
+			// Zone = Zone ID Number, Data = True or False (Running or Not Running)
+            function UpdateImage(zone, data) {
+                //console.log("setting zone set" + zone + " to " + data)
+                var elem = document.getElementById("set" + zone)
+                if (elem === null) return;
+
+                if (data) { // turn on - display image
+                    elem.style.display = 'inherit';
+                    onOffList[zone] = true;
+                }
+                else { // turn off - hide image
+                    elem.style.display = 'none';
+                    onOffList[zone] = false;
+                }
+		    }
+		
+			
+			function turnZoneOnOff(zone, turnOn) {
+		        // post a request to turn a zone on/off
+		        var url = hostAndPort + '/zone/' + zone;
+		        if (turnOn)
+		            url = url + '/ON';
+		        else
+		            url = url + '/OFF';
+
+		        $.ajax({
+		            type: 'POST',
+		            url: url
+		        })
+                .done(function (data) {
+                    QueryStatus();
+                    console.log('Did it ' + data)
+                });
+
+		    }
+
+
+            //var hostAndPort = "http://minwinpc:8888";
+            // seems like the iphone likes the ip address better...
+		    var hostAndPort = "http://192.168.1.200:8888";
+		    var onOffList = new Array(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
+
+			//// check zone status every so often
+			setInterval(function () {
+			    QueryStatus();
+			}, 2500);
+
+		</script>
+	</body>
+</html>

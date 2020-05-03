@@ -1,0 +1,132 @@
+﻿<!doctype html>
+<html>
+	<head>
+		<title>d3 Test page</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="./css/base.css">
+
+        <script src="./js/jquery-2.1.3.min.js"></script>
+        <script src="./js/bootstrap.min.js"></script>
+        <script src="./js/d3.min.js"></script>
+        <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+        <script src="./js/ie10-viewport-bug-workaround.js"></script>
+
+
+	</head>
+	<body>
+		<div class="container">
+            <h2>D3 Test</h2>
+            <!--<img src="./images/lawn.png" alt="lawn">-->
+            <section id="chart">
+                
+            </section>
+            
+ 		</div>
+
+        <script src="./js/base.js"></script>
+		<script>
+            var width = window.innerWidth;
+            var height = window.innerHeight;
+            //var voronoi = d3.voronoi().size([width, height]);
+            d3.select('#chart')
+            //d3.select('body')
+                .append('svg')
+                    .attr('width', width)
+                    .attr('height', height)
+                    .style('background', '#c9d7d6')
+            d3.select('svg')
+                .append('image')
+                    .attr('x', 0)
+                    .attr('y', 0)
+                    .style('left', '0px')
+                    .style('top', '0px')
+                    .attr('width', "100%")
+                    .attr('height', "100%")
+                    .attr('xlink:href', './images/lawn2.png')
+            d3.select('svg')
+                .append('rect')
+                    .attr('x', 200)
+                    .attr('y', 200)
+                    .attr('width', 50)
+                    .attr('height', 50)
+                    .style('fill', '#c61c6f');
+            d3.select('svg')
+                .append('circle')
+                .attr('cx', 300)
+                .attr('cy', 200)
+                .attr('r', 50)
+                .style('fill', '#840043');
+            d3.select('svg')
+                .append('polyline')
+                .attr('points', '10 35, 30 10, 50 35')
+                .style('fill', '#840043');
+
+            //var hostAndPort = "http://minwinpc:8888";
+            // seems like the iphone likes the ip address better...
+		    var hostAndPort = "http://192.168.1.200:8888";
+		    var onOffList = new Array(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
+
+		    function QueryStatus() {
+		        var url = hostAndPort + '/query/status';
+		        $.ajax({
+		            type: 'GET',
+		            url: url
+		        })
+                .done(function (data) {
+                    var obj = JSON.parse(data);
+                    if (obj.isError) {
+                        // todo - display the error here
+                        console.log('Error detected ' + obj)
+                    }
+                    else {
+                        //"{\"CurrentTime\":\"1\\/2\\/2016 8:09:41 PM\",\"InsideTemp\":\"67.89\",\"OutsideTemp\":\"-196.60\",\"ZoneRunSecondsLeft\":0,
+                        //\"ZonesOn\":[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]}"
+                        $('#ControllerDatetime').html(obj.CurrentTime);
+                        var zoneOn = 0;
+                        var found = false;
+                        for (var isOn in obj.ZonesOn) {
+                            zoneOn++;
+                            if (isOn === "1") {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(found) 
+                            $('#RunningZone').html(zoneOn);
+                        else
+                            $('#RunningZone').html('none');
+
+
+                        $('#IsPaused').html(obj.IsPaused.toString());
+
+                        $('#ControllerTemps').html("Inside: " + obj.InsideTemp + "F   Outside: " + obj.OutsideTemp + "F");
+                        $('#ZoneRunSecondsLeft').html(Math.floor(obj.ZoneRunSecondsLeft / 60) + ":" + (obj.ZoneRunSecondsLeft % 60));
+                        $('#PauseTimeLeft').html(Math.floor(obj.ZonePauseSecondsLeft / 60) + ":" + (obj.ZonePauseSecondsLeft % 60));
+                        
+                    }
+                });
+		    }
+
+		    function pauseProgTest() {
+		        // post a request to pause for 1 minute
+		        var url = hostAndPort + '/program/pause/1';
+		        $.ajax({
+		            type: 'POST',
+		            url: url
+		        })
+                .done(function (data) {
+                    QueryStatus();
+                    console.log('Did it ' + data)
+                });
+
+		    }
+
+			//// check zone status every so often
+			//setInterval(function () {
+			//    QueryStatus();
+			//}, 2500);
+
+		</script>
+	</body>
+</html>

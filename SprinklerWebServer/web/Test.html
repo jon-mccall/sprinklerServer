@@ -25,13 +25,33 @@
 
             </table>
 <br>
-            <br><button onclick="pauseProgTest()">Pause Program</button>
-            <br><button onclick="unpauseProgTest()">Unpause Program</button>
-            <br><button onclick="stopProgTest()">Stop Program</button>
-            <br><button onclick="startProgTest()">Start Program</button>
-            <br><button onclick="nextZoneTest()">Next Zone</button>
+            <table>
+                <tr>
+                    <td>
+                        <button onclick="pauseProgTest()" style="width: 160px; padding-top:10px; padding-bottom:10px">
+                        Pause Program</td>
+                    <td><input type="text" value="5" id="pauseTxt" name="pause_time" style="width:100px; margin-left:10px"> min</td>
+                </tr>
 
-		</div>
+                <tr>
+                    <td>
+                        <button onclick="stopProgTest()" style="width: 160px; margin-top: 10px; padding-top:10px; padding-bottom:10px">Stop Program</button>
+                    </td>
+                    <td>
+                        <button onclick="startProgTest()" style="width: 160px; margin-top: 10px; margin-left: 10px; padding-top:10px; padding-bottom:10px">Start Program</button>
+                    </td>
+
+                    <tr>
+                        <td>
+                            <button onclick="nextZoneTest()" style="width: 160px; margin-top: 10px; padding-top:10px; padding-bottom:10px">Next Zone</button>
+                        </td>
+                <tr>
+                    <td>
+                        <button onclick="unpauseProgTest()" style="width: 160px; margin-top: 10px">
+                        Unpause Program</td>
+                </tr>
+            </table>
+        </div>
 
 	  <script src="./js/base.js"></script>
       <script>
@@ -76,9 +96,11 @@
                 });
 		    }
 
-		    function pauseProgTest() {
+          function pauseProgTest() {
+              var pause = document.getElementById("pauseTxt").value;
 		        // post a request to pause for 1 minute
-		        var url = hostAndPort + '/program/pause/1';
+              var url = hostAndPort + '/program/pause/' + pause;
+              //alert("Posing to: " + url)
 		        $.ajax({
 		            type: 'POST',
 		            url: url
