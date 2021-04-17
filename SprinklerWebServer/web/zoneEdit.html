@@ -37,7 +37,7 @@
                        var myTable="<table><tr><td><b>Zone</td><td><b><center>Zone Name</td></tr>"
 						for (i=0; i < zoneCount; i++)
 						{
-							var myRow = "<tr><td><center>"+ obj[i].Id +":</td>  <td><input id='"+ obj[i].Id +"'type='text' value='"+ obj[i].Name +"'></td>  </tr>"
+                            var myRow = "<tr><td><center>" + obj[i].Id + ":</td>  <td><input id='" + obj[i].Id +"'type='text' style='color:black' value='"+ obj[i].Name +"'></td>  </tr>"
 							myTable += myRow;
 						}
                         myTable += "</table>"
@@ -79,6 +79,6 @@ QueryZoneList();
 <form id="zoneForm">
 <div id="zoneTable"> </div>
   
-  <input type="button" value="Save" onclick = "SaveChanges()">
+  <input type="button" value="Save" style="color:black" onclick = "SaveChanges()">
 </form>
 </html>

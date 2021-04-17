@@ -21,7 +21,7 @@
     <PackageCertificateKeyFile>SprinklerWebServer_TemporaryKey.pfx</PackageCertificateKeyFile>
     <AppxPackage>true</AppxPackage>
     <ContainsStartupTask>true</ContainsStartupTask>
-    <PackageCertificateThumbprint>0DFF61D431B9DE4702DD12DF9DF0AD930EEBDC2B</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>AD8A36BAD1948A87671C399D6B4F4C0E1D18E4FF</PackageCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
     <DebugSymbols>true</DebugSymbols>

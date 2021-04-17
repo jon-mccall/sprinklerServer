@@ -27,17 +27,17 @@ body {
   font-weight: 300;
   font-size: 1.2em;
   line-height: 1.2em;
-  background: #FDF6E3;
-  color: #475B62;
+  background: #312e2e;
+  color: #FFFFFF;
 }
- 
+
 label {
-  font-family: "Exo 2", "Helvetica Neue", Helvetica, sans-serif;
-  font-weight: 300;
-  font-size: .8em;
-  line-height: .8em;
-  background: #FDF6E3;
-  color: #475B62;
+    font-family: "Exo 2", "Helvetica Neue", Helvetica, sans-serif;
+    font-weight: 300;
+    font-size: .8em;
+    line-height: .8em;
+    background: #312e2e;
+    color: #808080;
 }
 
 strong {
@@ -47,17 +47,17 @@ strong {
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Roboto Slab', "Helvetica Neue", Helvetica, sans-serif;
   font-weight: 700;
-  color: #CB4B19;
+  color: #aacff5;
   font-size: 1.75em;
   margin-bottom: .4em;
 }
 
 .title {
-  font-family: 'Roboto Slab', "Helvetica Neue", Helvetica, sans-serif;
-  font-weight: 700;
-  color: #CB4B19;
-  font-size: 1.0em;
-  margin-bottom: .4em;
+    font-family: 'Roboto Slab', "Helvetica Neue", Helvetica, sans-serif;
+    font-weight: 700;
+    color: #aacff5;
+    font-size: 1.0em;
+    margin-bottom: .4em;
 }
  
 p {
