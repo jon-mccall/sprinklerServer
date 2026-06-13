@@ -13,7 +13,6 @@ namespace SprinklerWebServer
     //Class to define the HTTP WebServer
     public sealed class WebServer : IDisposable
     {
-        String sMyWebServerRoot = "C:\\MyWebServerRoot\\";
         //Create a buffer to read HTTP data
         private const uint BufferSize = 8192;
         //Port to listen on
@@ -21,6 +20,8 @@ namespace SprinklerWebServer
         //Listener to
         private readonly StreamSocketListener listener;
         Dictionary<string, string> mimeTypeMap = new Dictionary<string, string>();
+        // root folder for web files (set in ctor)
+        private string sMyWebServerRoot;
 
         public WebServer(int serverPort)
         {
@@ -74,12 +75,14 @@ namespace SprinklerWebServer
                     byte[] data = new byte[BufferSize];
                     IBuffer buffer = data.AsBuffer();
                     uint dataRead = BufferSize;
-                    //Read all the incomming data
+                    //Read all the incoming data; use the actual bytes read each iteration
                     while (dataRead == BufferSize)
                     {
-                        await input.ReadAsync(buffer, BufferSize, InputStreamOptions.Partial);
-                        request.Append(Encoding.UTF8.GetString(data, 0, data.Length));
-                        dataRead = buffer.Length;
+                        IBuffer readBuffer = await input.ReadAsync(buffer, BufferSize, InputStreamOptions.Partial);
+                        uint bytesRead = readBuffer.Length;
+                        if (bytesRead == 0) break;
+                        request.Append(Encoding.UTF8.GetString(data, 0, (int)bytesRead));
+                        dataRead = bytesRead;
                     }
                 }
 
@@ -139,11 +142,12 @@ namespace SprinklerWebServer
             // Look for HTTP request
             int iStartPos = requestMethod.IndexOf("HTTP", 1);
 
-
             // Get the HTTP text and version e.g. it will return "HTTP/1.1"
-            string sHttpVersion = requestMethod.Substring(iStartPos, 8);
+            string sHttpVersion = (iStartPos >= 0 && requestMethod.Length >= iStartPos + 8) ? requestMethod.Substring(iStartPos, 8) : "HTTP/1.1";
 
-            string sRequestedFile = requestParts[1];
+            string sRequestedFile = (requestParts.Length > 1) ? requestParts[1] : "/";
+            // strip query string if present
+            if (sRequestedFile.Contains("?")) sRequestedFile = sRequestedFile.Substring(0, sRequestedFile.IndexOf('?'));
 
             /////////////////////////////////////////////////////////////////////
             // Identify the Physical Directory
@@ -154,14 +158,9 @@ namespace SprinklerWebServer
             }
 
             string sfile = sRequestedFile.Replace('/', '\\');
-            //why path.combine not working????
-            //string sPhysicalFilePath = Path.Combine(sMyWebServerRoot, sfile);
-            string sPhysicalFilePath = String.Format("{0}{1}", sMyWebServerRoot, sfile);
-            // some requests have ?_12341234 attached, remove that
-            if(sPhysicalFilePath.Contains("?"))
-            {
-                sPhysicalFilePath = sPhysicalFilePath.Substring(0, sPhysicalFilePath.IndexOf('?'));
-            }
+            // use Path.Combine to construct physical path; trim leading slashes from sfile
+            string sPhysicalFilePath = Path.Combine(sMyWebServerRoot, sfile.TrimStart('\\'));
+
 
             //System.Diagnostics.Debug.WriteLine("File Requested : " + sRequestedFile);
 
@@ -185,30 +184,8 @@ namespace SprinklerWebServer
                 // Get TheMime Type
                 String sMimeType = GetMimeType(sRequestedFile);
 
-                int iTotBytes = 0;
-
-                string sResponse = "";
-
-                FileStream fs = new FileStream(sPhysicalFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                // Create a reader that can read bytes from the FileStream.
-
-
-                BinaryReader reader = new BinaryReader(fs);
-                byte[] bytes = new byte[fs.Length];
-                int read;
-                while ((read = reader.Read(bytes, 0, bytes.Length)) != 0)
-                {
-                    // Read from the file and write the data to the network
-                    sResponse = sResponse + Encoding.ASCII.GetString(bytes, 0, read);
-
-                    iTotBytes = iTotBytes + read;
-
-                }
-                reader.Dispose();
-                fs.Dispose();
-
-                //System.Diagnostics.Debug.WriteLine("Read {0} bytes from {1}", iTotBytes, sRequestedFile);
-
+                byte[] bytes = File.ReadAllBytes(sPhysicalFilePath);
+                int iTotBytes = bytes.Length;
                 byte[] header = MakeReponseHeader(sHttpVersion, sMimeType, iTotBytes, " 200 OK");
                 await SendToBrowser(bytes, header, output);
             }
