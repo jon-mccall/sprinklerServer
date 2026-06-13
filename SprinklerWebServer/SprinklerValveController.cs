@@ -130,8 +130,11 @@ namespace SprinklerWebServer
         /// <returns></returns>
         public IList<bool> QueryAllZonesStatusAsArray()
         {
-            List<bool> list = new List<bool>(zoneOffOnList);
-            return list;
+            lock (zoneOffOnList)
+            {
+                List<bool> list = new List<bool>(zoneOffOnList);
+                return list;
+            }
         }
 
         /// <summary>
@@ -141,10 +144,13 @@ namespace SprinklerWebServer
         /// <returns></returns>
         public bool QueryZoneStatus(int zone)
         {
-            try { 
+            try {
                 GpioPin pin = mapZoneToPin[zone];
-                GpioPinValue value = pin.Read();
-                return (value == GpioPinValue.Low);
+                lock (mapZoneToPin)
+                {
+                    GpioPinValue value = pin.Read();
+                    return (value == GpioPinValue.Low);
+                }
             }
             catch(Exception ex)
             {
@@ -163,10 +169,13 @@ namespace SprinklerWebServer
         public bool SetZoneOn(int zone)
         {
             try {
-                Utils.LogLine($"Zone {zone}, on");
-                GpioPin pin = mapZoneToPin[zone];
-                pin.Write(GpioPinValue.Low);
-                zoneOffOnList[zone - 1] = true;
+                lock (zoneOffOnList)
+                {
+                    Utils.LogLine($"Zone {zone}, on");
+                    GpioPin pin = mapZoneToPin[zone];
+                    pin.Write(GpioPinValue.Low);
+                    zoneOffOnList[zone - 1] = true;
+                }
                 return true;
             }
             catch(Exception ex)
@@ -183,11 +192,13 @@ namespace SprinklerWebServer
         /// <returns></returns>
         public bool SetZoneOff(int zone)
         {
-            Utils.LogLine($"Turning Zone {zone} off");
-            GpioPin pin = mapZoneToPin[zone];
-            pin.Write(GpioPinValue.High);
-            zoneOffOnList[zone - 1] = false;
-
+            lock (zoneOffOnList)
+            {
+                Utils.LogLine($"Turning Zone {zone} off");
+                GpioPin pin = mapZoneToPin[zone];
+                pin.Write(GpioPinValue.High);
+                zoneOffOnList[zone - 1] = false;
+            }
             return true;
         }
 

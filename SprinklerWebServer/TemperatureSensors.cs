@@ -80,6 +80,7 @@ namespace SprinklerWebServer
 
                 //Create a timer to periodicly read the temps from the Arduino
                 periodicTimer = new Timer(TimerCallback, null, 0, ReadInterval);
+                
             }
             return;
         }
@@ -109,10 +110,13 @@ namespace SprinklerWebServer
             //Write the data to temperature variables
             try
             {
-                if (data[0].Trim() != "")
-                    InsideTemperature = data[0];
-                if (data[1].Trim() != "")
-                    OutsideTemperature = data[1];
+                lock (insideTemperature)
+                {
+                    if (data[0].Trim() != "")
+                        InsideTemperature = data[0];
+                    if (data[1].Trim() != "")
+                        OutsideTemperature = data[1];
+                }
             }
             catch (Exception) { }
         }

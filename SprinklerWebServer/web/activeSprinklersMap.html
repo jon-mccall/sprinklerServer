@@ -85,7 +85,7 @@
             .attr('xlink:href', './images/Map/YardWithSprinklers.png')
             //.attr('xlink:href', 'http://192.168.1.200:8889/images/Map/YardWithSprinklers.png')
 							
-		for (i = 1; i < 14; i++) {
+		for (i = 1; i < 15; i++) {
 			svg.append('image')
 				.attr('xlink:href', './images/Map/'+i+'.png')
 				.style('display', 'none')
@@ -93,17 +93,28 @@
 		}
 			
 			
-			//Set 6
+			//Set 6 - shrubs
 			d3.select('svg')
                 .append('rect')
 				.attr('x', 35)
 				.attr('y', 125)
-				.attr('width', 80)
+				.attr('width', 50) // 80
 				.attr('height', 70)
 				.style('fill', 'blue')
 				.style("opacity", 0.0)
 				.attr("id", "B6")
-					
+
+            //Set 14 - back drip line
+            d3.select('svg')
+                .append('rect')
+                .attr('x', 85)
+                .attr('y', 145)
+                .attr('width', 35)
+                .attr('height', 30)
+                .style('fill', 'blue')
+                .style("opacity", 0.5)
+                .attr("id", "B14")
+
 			//Set 1
 			d3.select('svg')
                 .append('polyline')
@@ -282,7 +293,7 @@
 			//// check zone status every so often
 			setInterval(function () {
 			    QueryStatus();
-			}, 2500);
+			}, 3000);
 
 		</script>
 	</body>

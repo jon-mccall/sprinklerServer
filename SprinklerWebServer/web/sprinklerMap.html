@@ -30,6 +30,7 @@
             <img src="./images/Map/11.png" id="set11" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
             <img src="./images/Map/12.png" id="set12" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
             <img src="./images/Map/13.png" id="set13" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
+            <img src="./images/Map/14.png" id="set14" alt="lawn" style="position:absolute; top:50px; left:0px; display:none" onclick="mapClicked(event)">
 
         </div>
 
@@ -45,7 +46,7 @@
                 poly3 = [[190, 90], [290, 90], [300, 200], [185, 200]]
                 poly4 = [[0, 220], [185, 200], [225, 260], [0, 220]]
                 poly5 = [[0, 260], [225, 260], [225,300], [0,300]]
-                poly6 = [[65, 142], [140, 125], [165, 190], [62, 230]]
+                poly6 = [[65, 142], [112, 125], [120, 190], [62, 230]]
                 poly7 = [[0, 300], [225, 300], [225, 345], [0, 345]]
                 poly8 = [[230,225], [380,225], [380,295], [230,295]]
                 poly9 = [[230,295], [425,295], [425,335], [230,335]]
@@ -53,8 +54,10 @@
                 poly11 = [[230,335], [500,335], [500,380], [230,380]]
                 poly12 = [[0, 380], [225, 380], [225, 415], [0, 415]]
                 poly13 = [[230, 380], [500, 380], [500, 415], [230, 415]]
+                poly13 = [[230, 380], [500, 380], [500, 415], [230, 415]]
+                poly14 = [[135, 150], [171,155], [171, 185], [135, 185]]
                 polies = [poly1, poly2, poly3, poly4, poly5, poly6,
-                            poly7, poly8, poly9, poly10, poly11, poly12, poly13];
+                            poly7, poly8, poly9, poly10, poly11, poly12, poly13, poly14];
 
                 for (i = 0; i < polies.length; i++) {
                     poly = polies[i];
@@ -175,7 +178,7 @@
 			//// check zone status every so often
 			setInterval(function () {
 			    QueryStatus();
-			}, 2500);
+            }, 3000);
 
 		</script>
 	</body>

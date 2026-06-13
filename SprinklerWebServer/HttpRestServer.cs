@@ -73,7 +73,7 @@ namespace SprinklerWebServer
 
             try
             {
-                System.Diagnostics.Debug.WriteLine("ProcessRequestAsync called...");
+                System.Diagnostics.Debug.WriteLine("ProcessRequestAsync called..., BufferSize=" + BufferSize);
                 StringBuilder request = new StringBuilder();
                 //Get the incomming data
                 using (IInputStream input = socket.InputStream)
@@ -88,7 +88,9 @@ namespace SprinklerWebServer
                         request.Append(Encoding.UTF8.GetString(data, 0, data.Length));
                         dataRead = buffer.Length;
                     }
+                    System.Diagnostics.Debug.WriteLine("Finished read " + request.Length + " bytes");
                 }
+
 
                 //Got the data start processing a response
                 using (IOutputStream output = socket.OutputStream)
@@ -102,23 +104,32 @@ namespace SprinklerWebServer
                     }
                     //We only respond HTTP GETS and POST methods
                     if (requestParts[0] == "GET" && requestParts.Length > 1)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Responding to GET");
                         await WriteGetResponseAsync(requestParts[1], output);
+                    }
                     else if (requestParts[0] == "POST" && requestParts.Length > 1)
                     {
+                        System.Diagnostics.Debug.WriteLine("Responding to POST");
                         // parse out any json
                         int istart = requestMethod.IndexOf("[{");
                         int iend = requestMethod.IndexOf("}]");
                         int len = iend - istart + 2;
                         string json = null;
-                        if(istart > 0 && len > 0)
+                        if (istart > 0 && len > 0)
                             json = requestMethod.Substring(istart, len);
                         await WritePostResponseAsync(requestParts[1], output, json);
                     }
                     else
+                    {
+                        System.Diagnostics.Debug.WriteLine("Responding to UNSPORTED " + requestParts[0]);
                         await WriteMethodNotSupportedResponseAsync(requestParts[0], output);
+                    }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine("ProcessRequestAsync Exception Caught: " + ex.Message);
+            }
         }
 
         //Handles all HTTP GET's
@@ -215,6 +226,7 @@ namespace SprinklerWebServer
                         case "STATUS":
                             urlFound = true;
                             responseMsg = MakeStatusJson();
+                            System.Diagnostics.Debug.WriteLine("GetResponse for STATUS - made" );
                             break;
                         case "ZONELIST":
                             urlFound = true;
@@ -335,14 +347,23 @@ namespace SprinklerWebServer
             {
                 SprinklerStatus model = new SprinklerStatus()
                 {
+                    //InsideTemp = TemperatureSensors.InsideTemperature,
+                    //OutsideTemp = TemperatureSensors.OutsideTemperature,
+                    //CurrentTime = DateTime.Now.ToString(),
+                    //ZonesOn = sprinklerController.QueryAllZonesStatusAsArray(),
+                    //ZoneRunSecondsLeft = programController.ZoneRunSecondsLeft,
+                    //IsPaused = programController.IsPaused,
+                    //ZonePauseSecondsLeft = programController.ZonePauseSecondsLeft,
                     InsideTemp = TemperatureSensors.InsideTemperature,
                     OutsideTemp = TemperatureSensors.OutsideTemperature,
                     CurrentTime = DateTime.Now.ToString(),
                     ZonesOn = sprinklerController.QueryAllZonesStatusAsArray(),
                     ZoneRunSecondsLeft = programController.ZoneRunSecondsLeft,
                     IsPaused = programController.IsPaused,
-                    ZonePauseSecondsLeft = programController.ZonePauseSecondsLeft,
+                    ZonePauseSecondsLeft = programController.ZonePauseSecondsLeft
                 };
+
+                System.Diagnostics.Debug.WriteLine("MakeStatusJson - got the data, serializing it");
 
                 string json = Utils.SerializeJSon(model);
                 return json;
@@ -637,6 +658,7 @@ namespace SprinklerWebServer
                     if (urlFound)
                         await bodyStream.CopyToAsync(response);
                     await response.FlushAsync();
+                    System.Diagnostics.Debug.WriteLine("wrote response");
                 }
             }
             catch (Exception ex) {

@@ -49,12 +49,14 @@ namespace SprinklerWebServer
         public void StartServer()
         {
 #pragma warning disable CS4014
+            System.Diagnostics.Debug.WriteLine("WebServer - binding the listener");
             listener.BindServiceNameAsync(port.ToString());
 #pragma warning restore CS4014
         }
 
         public void Dispose()
         {
+            System.Diagnostics.Debug.WriteLine("WebServer - disposing the listener");
             listener.Dispose();
         }
 
@@ -226,7 +228,7 @@ namespace SprinklerWebServer
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("UNKNOWN MIME TYPE: " + ext);
+                System.Diagnostics.Debug.WriteLine("UNKNOWN MIME TYPE: " + ext + ", requested file '" + sRequestedFile + "'");
                 return mimeTypeMap[".html"];
             }
         }
