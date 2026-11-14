@@ -256,7 +256,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="web\Test.html">
+    <Content Include="web\MainPage.html">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Content>

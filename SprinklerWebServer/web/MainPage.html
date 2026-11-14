@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Sprinkler Status</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./css/base.css">
+    <style>
+        .status-page {
+            box-sizing: border-box;
+            margin: 0 auto;
+            max-width: 720px;
+            padding: 10px 12px 24px;
+        }
+
+        .map-container {
+            background: #c9d7d6;
+            cursor: pointer;
+            margin: 0 auto 16px;
+            max-width: 568px;
+            overflow: hidden;
+            position: relative;
+            touch-action: manipulation;
+            width: 100%;
+        }
+
+        .map-container img {
+            height: 100%;
+            left: 0;
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            width: 100%;
+        }
+
+        .map-container .map-base {
+            display: block;
+            height: auto;
+            position: relative;
+        }
+
+        .map-container img:not(.map-base) {
+            display: none;
+        }
+
+        .status-grid {
+            background: #242222;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            padding: 4px 12px;
+        }
+
+        .status-row {
+            align-items: baseline;
+            border-bottom: 1px solid #474343;
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            min-height: 42px;
+            padding: 8px 0;
+        }
+
+        .status-row:last-child {
+            border-bottom: 0;
+        }
+
+        .status-label {
+            color: #ddd;
+            flex: 0 0 46%;
+        }
+
+        .status-value {
+            color: #aacff5;
+            flex: 1;
+            font-size: .95em;
+            word-break: break-word;
+            text-align: right;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .control-button,
+        .pause-input {
+            border: 0;
+            border-radius: 5px;
+            box-sizing: border-box;
+            color: #111;
+            font: inherit;
+            min-height: 48px;
+            width: 100%;
+        }
+
+        .control-button {
+            background: #e7e7e7;
+            cursor: pointer;
+            margin-bottom: 10px;
+            padding: 10px 12px;
+            width: calc(50% - 5px);
+        }
+
+        .control-button:active {
+            background: #c8dff5;
+        }
+
+        .pause-control {
+            align-items: center;
+            display: flex;
+            width: 100%;
+        }
+
+        .pause-control .control-button {
+            flex: 1;
+            margin-right: 8px;
+            width: auto;
+        }
+
+        .pause-input {
+            flex: 0 0 76px;
+            margin-bottom: 10px;
+            padding: 8px;
+            text-align: center;
+            width: 76px;
+        }
+
+        .pause-unit {
+            color: #ddd;
+            margin: 0 0 10px 8px;
+        }
+
+        .status-message {
+            color: #ffb7b7;
+            min-height: 1.2em;
+            padding-top: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 420px) {
+            .status-page {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+            .status-row {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 3px;
+            }
+
+            .status-label,
+            .status-value {
+                flex-basis: auto;
+                text-align: left;
+            }
+
+            .control-button {
+                width: 100%;
+            }
+
+            .pause-control {
+                width: 100%;
+            }
+
+            .pause-control .control-button {
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main id="StatusPage" class="status-page">
+        <div id="SprinklerMap" class="map-container" aria-label="Sprinkler zone map. Tap a zone to turn it on or off.">
+            <img class="map-base" src="./images/Map/YardWithSprinklers.png" alt="Yard sprinkler zones">
+            <img src="./images/Map/1.png" id="set1" alt="">
+            <img src="./images/Map/2.png" id="set2" alt="">
+            <img src="./images/Map/3.png" id="set3" alt="">
+            <img src="./images/Map/4.png" id="set4" alt="">
+            <img src="./images/Map/5.png" id="set5" alt="">
+            <img src="./images/Map/6.png" id="set6" alt="">
+            <img src="./images/Map/7.png" id="set7" alt="">
+            <img src="./images/Map/8.png" id="set8" alt="">
+            <img src="./images/Map/9.png" id="set9" alt="">
+            <img src="./images/Map/10.png" id="set10" alt="">
+            <img src="./images/Map/11.png" id="set11" alt="">
+            <img src="./images/Map/12.png" id="set12" alt="">
+            <img src="./images/Map/13.png" id="set13" alt="">
+            <img src="./images/Map/14.png" id="set14" alt="">
+        </div>
+
+        <section class="status-grid" aria-label="Controller status">
+            <div class="status-row"><span class="status-label">Current Time</span><span class="status-value" id="ControllerDatetime">--</span></div>
+            <div class="status-row"><span class="status-label">Running Zone</span><span class="status-value" id="RunningZone">none</span></div>
+            <div class="status-row"><span class="status-label">Zone Time Left</span><span class="status-value" id="ZoneRunSecondsLeft">0:00</span></div>
+            <div class="status-row"><span class="status-label">Paused</span><span class="status-value" id="IsPaused">--</span></div>
+            <div class="status-row"><span class="status-label">Pause Time Left</span><span class="status-value" id="PauseTimeLeft">0:00</span></div>
+            <div class="status-row"><span class="status-label">Temperatures</span><span class="status-value" id="ControllerTemps">--</span></div>
+        </section>
+
+        <section class="controls" aria-label="Program controls">
+            <div class="pause-control">
+                <button class="control-button" type="button" onclick="pauseProgram()">Pause Program</button>
+                <input class="pause-input" type="number" value="5" min="1" inputmode="numeric" id="pauseTxt" aria-label="Pause duration in minutes">
+                <span class="pause-unit">min</span>
+            </div>
+            <button class="control-button" type="button" onclick="stopProgram()">Stop Program</button>
+            <button class="control-button" type="button" onclick="startProgram()">Start Program</button>
+            <button class="control-button" type="button" onclick="nextZone()">Next Zone</button>
+            <button class="control-button" type="button" onclick="unpauseProgram()">Unpause Program</button>
+        </section>
+        <div id="StatusMessage" class="status-message" role="status" aria-live="polite"></div>
+    </main>
+
+    <script src="./js/base.js"></script>
+    <script>
+        (function () {
+            var statusRequestInFlight = false;
+            var pollId = (window.statusPagePollId || 0) + 1;
+            window.statusPagePollId = pollId;
+            var nativeMapWidth = 568;
+            var nativeMapHeight = 417;
+            var zonePolygons = [
+                [[0, 0], [40, 0], [50, 160], [0, 200]],
+                [[40, 0], [100, 0], [200, 75], [165, 165]],
+                [[190, 90], [290, 90], [300, 200], [185, 200]],
+                [[0, 220], [185, 200], [225, 260], [0, 220]],
+                [[0, 260], [225, 260], [225, 300], [0, 300]],
+                [[65, 142], [112, 125], [120, 190], [62, 230]],
+                [[0, 300], [225, 300], [225, 345], [0, 345]],
+                [[230, 225], [380, 225], [380, 295], [230, 295]],
+                [[230, 295], [425, 295], [425, 335], [230, 335]],
+                [[0, 345], [225, 345], [225, 380], [0, 380]],
+                [[230, 335], [500, 335], [500, 380], [230, 380]],
+                [[0, 380], [225, 380], [225, 415], [0, 415]],
+                [[230, 380], [500, 380], [500, 415], [230, 415]],
+                [[135, 150], [171, 155], [171, 185], [135, 185]]
+            ];
+
+            function formatDuration(seconds) {
+                seconds = Math.max(0, Number(seconds) || 0);
+                var remainingSeconds = String(seconds % 60);
+                return Math.floor(seconds / 60) + ':' + (remainingSeconds.length < 2 ? '0' : '') + remainingSeconds;
+            }
+
+            function showMessage(message) {
+                $('#StatusMessage').text(message || '');
+            }
+
+            function updateZoneImages(zonesOn) {
+                for (var i = 0; i < zonesOn.length && i < 14; i++) {
+                    var isOn = zonesOn[i] === true;
+                    $('#set' + (i + 1)).toggle(isOn);
+                    onOffList[i + 1] = isOn;
+                }
+            }
+
+            window.queryStatus = function () {
+                if (statusRequestInFlight || !document.getElementById('StatusPage')) {
+                    return;
+                }
+
+                statusRequestInFlight = true;
+                $.ajax({
+                    type: 'GET',
+                    url: hostAndPort + '/query/status',
+                    cache: false,
+                    timeout: 10000
+                })
+                .done(function (data) {
+                    var status = typeof data === 'string' ? JSON.parse(data) : data;
+                    if (status.isError) {
+                        showMessage('The controller reported an error.');
+                        return;
+                    }
+
+                    var runningZone = 'none';
+                    for (var i = 0; i < status.ZonesOn.length; i++) {
+                        if (status.ZonesOn[i] === true) {
+                            runningZone = i + 1;
+                            break;
+                        }
+                    }
+
+                    $('#ControllerDatetime').text(status.CurrentTime);
+                    $('#RunningZone').text(runningZone);
+                    $('#IsPaused').text(status.IsPaused ? 'Yes' : 'No');
+                    $('#ControllerTemps').text('Inside: ' + status.InsideTemp + '°F  Outside: ' + status.OutsideTemp + '°F');
+                    $('#ZoneRunSecondsLeft').text(formatDuration(status.ZoneRunSecondsLeft));
+                    $('#PauseTimeLeft').text(formatDuration(status.ZonePauseSecondsLeft));
+                    updateZoneImages(status.ZonesOn);
+                    showMessage('');
+                })
+                .fail(function () {
+                    showMessage('Unable to reach the sprinkler controller.');
+                })
+                .always(function () {
+                    statusRequestInFlight = false;
+                });
+            };
+
+            function postAction(path) {
+                showMessage('Sending command…');
+                return $.ajax({
+                    type: 'POST',
+                    url: hostAndPort + path,
+                    timeout: 10000
+                })
+                .done(function () {
+                    queryStatus();
+                })
+                .fail(function () {
+                    showMessage('The command could not be completed.');
+                });
+            }
+
+            window.pauseProgram = function () {
+                var pauseMinutes = Math.max(1, parseInt($('#pauseTxt').val(), 10) || 1);
+                $('#pauseTxt').val(pauseMinutes);
+                postAction('/program/pause/' + pauseMinutes);
+            };
+
+            window.unpauseProgram = function () { postAction('/program/unpause'); };
+            window.stopProgram = function () { postAction('/program/stop'); };
+            window.startProgram = function () { postAction('/program/start/1'); };
+            window.nextZone = function () { postAction('/program/RUNNEXTZONE'); };
+
+            function pointInPolygon(polygon, point) {
+                var inside = false;
+                for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                    var crosses = ((polygon[i][1] > point[1]) !== (polygon[j][1] > point[1])) &&
+                        (point[0] < (polygon[j][0] - polygon[i][0]) * (point[1] - polygon[i][1]) /
+                        (polygon[j][1] - polygon[i][1]) + polygon[i][0]);
+                    if (crosses) {
+                        inside = !inside;
+                    }
+                }
+                return inside;
+            }
+
+            function mapClicked(event) {
+                var map = document.getElementById('SprinklerMap');
+                var bounds = map.getBoundingClientRect();
+                var point = [
+                    (event.clientX - bounds.left) * nativeMapWidth / bounds.width,
+                    (event.clientY - bounds.top) * nativeMapHeight / bounds.height
+                ];
+
+                for (var i = 0; i < zonePolygons.length; i++) {
+                    if (pointInPolygon(zonePolygons[i], point)) {
+                        var zone = i + 1;
+                        postAction('/zone/' + zone + (onOffList[zone] ? '/OFF' : '/ON'));
+                        break;
+                    }
+                }
+            }
+
+            $('#SprinklerMap').on('click', mapClicked);
+            updateZoneImages(onOffList.slice(1));
+
+            function scheduleStatusPoll() {
+                if (!document.getElementById('StatusPage') || window.statusPagePollId !== pollId) {
+                    return;
+                }
+                queryStatus();
+                window.setTimeout(scheduleStatusPoll, 3000);
+            }
+
+            scheduleStatusPoll();
+        }());
+    </script>
+</body>
+</html>
