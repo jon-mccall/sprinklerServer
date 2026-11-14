@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.AppService;
 using Windows.Networking.Sockets;
@@ -17,6 +18,7 @@ namespace SprinklerWebServer
     public sealed class HttpRestServer : IDisposable
     {
         private bool inited = false;
+        private readonly object initializationLock = new object();
         //Create a buffer to read HTTP data
         private const uint BufferSize = 8192;
         //Port to listen on
@@ -40,18 +42,16 @@ namespace SprinklerWebServer
             //tempSensors = temp;
 
             //Add event handler for HTTP connections
-            listener.ConnectionReceived += (s, e) => ProcessRequestAsync(e.Socket);
+            listener.ConnectionReceived += async (s, e) => await ProcessRequestAsync(e.Socket);
 
             System.Diagnostics.Debug.WriteLine("Sprinkler HTTP REST server starting...");
         }
 
         //Call to start the listner 
-        public void StartServer()
+        internal async Task StartServerAsync()
         {
-#pragma warning disable CS4014
-            listener.BindServiceNameAsync(port.ToString());
-#pragma warning restore CS4014
-
+            await listener.BindServiceNameAsync(port.ToString());
+            System.Diagnostics.Debug.WriteLine("HTTP REST server bound to port " + port);
         }
 
         public void Dispose()
@@ -60,15 +60,22 @@ namespace SprinklerWebServer
         }
 
 
-        private async void ProcessRequestAsync(StreamSocket socket)
+        private async Task ProcessRequestAsync(StreamSocket socket)
         {
-            if(!inited)
+            bool initializeSensors = false;
+            lock (initializationLock)
             {
-                // start the temp sensor here...
-                // for some reason when I put it earlier init was getting called twice
-                // and so it would fail the second time.  Maybe an async bug with iot?
+                if (!inited)
+                {
+                    inited = true;
+                    initializeSensors = true;
+                }
+            }
+
+            if (initializeSensors)
+            {
+                // Initialize once; concurrent first requests must not initialize GPIO twice.
                 TemperatureSensors.InitSensors();
-                inited = true;
             }
 
             try
@@ -78,15 +85,26 @@ namespace SprinklerWebServer
                 //Get the incomming data
                 using (IInputStream input = socket.InputStream)
                 {
-                    byte[] data = new byte[BufferSize];
-                    IBuffer buffer = data.AsBuffer();
-                    uint dataRead = BufferSize;
-                    //Read all the incomming data
-                    while (dataRead == BufferSize)
+                    // Read through the complete HTTP header and, for POSTs, its declared body.
+                    while (true)
                     {
-                        await input.ReadAsync(buffer, BufferSize, InputStreamOptions.Partial);
-                        request.Append(Encoding.UTF8.GetString(data, 0, data.Length));
-                        dataRead = buffer.Length;
+                        IBuffer readBuffer = await input.ReadAsync(
+                            new Windows.Storage.Streams.Buffer(BufferSize),
+                            BufferSize,
+                            InputStreamOptions.Partial);
+                        if (readBuffer.Length == 0)
+                            break;
+
+                        byte[] bytesRead = readBuffer.ToArray();
+                        request.Append(Encoding.UTF8.GetString(bytesRead, 0, bytesRead.Length));
+
+                        int headerEnd = request.ToString().IndexOf("\r\n\r\n", StringComparison.Ordinal);
+                        if (headerEnd >= 0)
+                        {
+                            int contentLength = GetContentLength(request.ToString(), headerEnd);
+                            if (request.Length >= headerEnd + 4 + contentLength)
+                                break;
+                        }
                     }
                     System.Diagnostics.Debug.WriteLine("Finished read " + request.Length + " bytes");
                 }
@@ -97,7 +115,7 @@ namespace SprinklerWebServer
                 {
                     string requestMethod = request.ToString();
                     string[] requestParts = { "" };
-                    if (requestMethod != null)
+                    if (!String.IsNullOrWhiteSpace(requestMethod))
                     {
                         //Beakup the first line of the request into it parts
                         requestParts = requestMethod.Split('\n')[0].Split(' ');
@@ -112,12 +130,8 @@ namespace SprinklerWebServer
                     {
                         System.Diagnostics.Debug.WriteLine("Responding to POST");
                         // parse out any json
-                        int istart = requestMethod.IndexOf("[{");
-                        int iend = requestMethod.IndexOf("}]");
-                        int len = iend - istart + 2;
-                        string json = null;
-                        if (istart > 0 && len > 0)
-                            json = requestMethod.Substring(istart, len);
+                        int bodyStart = requestMethod.IndexOf("\r\n\r\n", StringComparison.Ordinal);
+                        string json = bodyStart >= 0 ? requestMethod.Substring(bodyStart + 4) : null;
                         await WritePostResponseAsync(requestParts[1], output, json);
                     }
                     else
@@ -130,6 +144,27 @@ namespace SprinklerWebServer
             catch (Exception ex) {
                 System.Diagnostics.Debug.WriteLine("ProcessRequestAsync Exception Caught: " + ex.Message);
             }
+            finally
+            {
+                socket.Dispose();
+            }
+        }
+
+        private static int GetContentLength(string request, int headerEnd)
+        {
+            string[] headerLines = request.Substring(0, headerEnd).Split(new[] { "\r\n" }, StringSplitOptions.None);
+            foreach (string header in headerLines)
+            {
+                const string contentLengthHeader = "Content-Length:";
+                if (header.StartsWith(contentLengthHeader, StringComparison.OrdinalIgnoreCase))
+                {
+                    int contentLength;
+                    if (Int32.TryParse(header.Substring(contentLengthHeader.Length).Trim(), out contentLength) && contentLength >= 0)
+                        return contentLength;
+                }
+            }
+
+            return 0;
         }
 
         //Handles all HTTP GET's
@@ -138,6 +173,12 @@ namespace SprinklerWebServer
             bool urlFound = false;
             byte[] bodyArray = null;
             string responseMsg = "";
+
+            // Browser cache-busting and other query parameters are not part of
+            // the REST route (for example, /query/status?_=12345).
+            int queryStringStart = request.IndexOf('?');
+            if (queryStringStart >= 0)
+                request = request.Substring(0, queryStringStart);
 
             //ZONE/[zone]/running - currently running or not?
             //ZONE/[zone]/timeleft - number of seconds left
@@ -227,6 +268,12 @@ namespace SprinklerWebServer
                             urlFound = true;
                             responseMsg = MakeStatusJson();
                             System.Diagnostics.Debug.WriteLine("GetResponse for STATUS - made" );
+                            break;
+                        case "ALLZONESTATUS":
+                            urlFound = true;
+                            responseMsg = String.Join(",", sprinklerController
+                                .QueryAllZonesStatusAsArray()
+                                .Select(isOn => isOn ? "ON" : "OFF"));
                             break;
                         case "ZONELIST":
                             urlFound = true;
@@ -523,6 +570,12 @@ namespace SprinklerWebServer
             if(requestUpper.StartsWith("/ZONE/"))
             {
                 Tuple<int, string> zc = ParseZoneCommand(requestUpper);
+                if (zc == null)
+                {
+                    bodyArray = Encoding.UTF8.GetBytes("Invalid zone command");
+                    await WriteResponseAsync(request.ToUpper(), "Invalid zone command", false, bodyArray, os, 400);
+                    return;
+                }
                 int zone = zc.Item1;
                 string cmd = zc.Item2;
                 switch(cmd)
@@ -548,6 +601,8 @@ namespace SprinklerWebServer
                 try
                 {
                     Tuple<string, string> zc = ParseProgramCommand(requestUpper);
+                    if (zc == null)
+                        throw new ArgumentException("Invalid program command");
                     string cmd = zc.Item1;
                     switch (cmd)
                     {
@@ -600,6 +655,8 @@ namespace SprinklerWebServer
                 try
                 {
                     Tuple<string, string> zc = ParseProgramCommand(requestUpper);
+                    if (zc == null)
+                        throw new ArgumentException("Invalid settings command");
                     string cmd = zc.Item1;
                     switch (cmd)
                     {
@@ -632,11 +689,11 @@ namespace SprinklerWebServer
             bool urlFound = false;
             byte[] bodyArray = null;
             bodyArray = Encoding.UTF8.GetBytes("");
-            await WriteResponseAsync(request.ToUpper(), "NOT SUPPORTED", urlFound, bodyArray, os);
+            await WriteResponseAsync(request.ToUpper(), "NOT SUPPORTED", urlFound, bodyArray, os, 405);
         }
 
         //Write the response for HTTP GET's and POST's 
-        private async Task WriteResponseAsync(string RequestMsg, string ResponseMsg, bool urlFound, byte[] bodyArray, IOutputStream os)
+        private async Task WriteResponseAsync(string RequestMsg, string ResponseMsg, bool urlFound, byte[] bodyArray, IOutputStream os, int statusCode = 0)
         {
             //try  //The appService will die after a day or so. Let 's try catch it seperatly so the server will still return
             //{
@@ -652,10 +709,14 @@ namespace SprinklerWebServer
                 MemoryStream bodyStream = new MemoryStream(bodyArray);
                 using (Stream response = os.AsStreamForWrite())
                 {
-                    string header = GetHeader(urlFound, bodyStream.Length.ToString());
+                    bool includeBody = statusCode == 0 ? urlFound : statusCode != 404;
+                    string contentType = ResponseMsg.StartsWith("{") || ResponseMsg.StartsWith("[")
+                        ? "application/json; charset=utf-8"
+                        : "text/plain; charset=utf-8";
+                    string header = GetHeader(urlFound, includeBody ? bodyStream.Length.ToString() : "0", contentType, statusCode);
                     byte[] headerArray = Encoding.UTF8.GetBytes(header);
                     await response.WriteAsync(headerArray, 0, headerArray.Length);
-                    if (urlFound)
+                    if (includeBody)
                         await bodyStream.CopyToAsync(response);
                     await response.FlushAsync();
                     System.Diagnostics.Debug.WriteLine("wrote response");
@@ -667,24 +728,44 @@ namespace SprinklerWebServer
         }
 
         //Creates the HTTP header text for found and not found urls
-        string GetHeader(bool urlFound, string bodyStreamLength)
+        string GetHeader(bool urlFound, string bodyStreamLength, string contentType, int statusCode)
         {
-            string header;
-            if (urlFound)
+            if (statusCode == 0)
+                statusCode = urlFound ? 200 : 404;
+
+            string statusText;
+            switch (statusCode)
             {
-                header = "HTTP/1.1 200 OK\r\n" +
+                case 200:
+                    statusText = "200 OK";
+                    break;
+                case 400:
+                    statusText = "400 Bad Request";
+                    break;
+                case 405:
+                    statusText = "405 Method Not Allowed";
+                    break;
+                default:
+                    statusText = "404 Not Found";
+                    break;
+            }
+
+            string header;
+            if (statusCode == 200)
+            {
+                header = "HTTP/1.1 " + statusText + "\r\n" +
                            "Access-Control-Allow-Origin: *\r\n" +
-                           "Content-Type: text/plain\r\n" +
+                           "Content-Type: " + contentType + "\r\n" +
                            "Content-Length: " + bodyStreamLength + "\r\n" +
                            "Connection: close\r\n\r\n";
             }
             else
             {
-                header = "HTTP/1.1 404 Not Found\r\n" +
+                header = "HTTP/1.1 " + statusText + "\r\n" +
                          "Access-Control-Allow-Origin: *\r\n" +
-                         "Content-Type: text/plain\r\n" +
+                         "Content-Type: " + contentType + "\r\n" +
                          "Content-Length: 0\r\n" +
-                         "Connection close\r\n\r\n";
+                         "Connection: close\r\n\r\n";
             }
             return header;
         }

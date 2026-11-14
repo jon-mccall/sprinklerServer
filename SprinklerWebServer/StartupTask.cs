@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Net.Http;
 using Windows.ApplicationModel.Background;
 using Windows.ApplicationModel.AppService;
@@ -18,6 +20,10 @@ namespace SprinklerWebServer
         AppServiceConnection appServiceConnection;
         SprinklerValveController valveController;
         SprinklerProgramController programController;
+        HttpRestServer restServer;
+        WebServer webServer;
+        readonly SemaphoreSlim initializationLock = new SemaphoreSlim(1, 1);
+        bool initialized;
         //CloudDataSaver cloudDataSaver;
 
         //TemperatureSensors tempSensors;
@@ -45,7 +51,7 @@ namespace SprinklerWebServer
             }
 
             // just run init, maybe don't need the above...
-            Initialize();
+            StartInitialization();
         }
 
         private async void AppServiceConnection_RequestReceived(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
@@ -61,7 +67,7 @@ namespace SprinklerWebServer
                         //Devices.InitDevices();
 
                         var messageDeferral = args.GetDeferral();
-                        Initialize();
+                        await InitializeAsync();
                         ////Define a new instance of our HTTPServer on Port 8888
                         //HttpServer server = new HttpServer(8888, appServiceConnection);
                         //IAsyncAction asyncAction = Windows.System.Threading.ThreadPool.RunAsync(
@@ -89,33 +95,62 @@ namespace SprinklerWebServer
             }
         }
 
-        private void Initialize()
+        private async void StartInitialization()
         {
-            valveController = new SprinklerValveController();
-            programController = new SprinklerProgramController(valveController);
-            //cloudDataSaver = new CloudDataSaver();
+            try
+            {
+                Utils.LogLine("Starting HTTP servers.");
+                await InitializeAsync();
+                Utils.LogLine("HTTP servers started.");
+            }
+            catch (Exception ex)
+            {
+                Utils.LogLine("Server initialization failed: " + ex);
+                System.Diagnostics.Debug.WriteLine("Server initialization failed: " + ex);
+            }
+        }
 
-            //Define a new instance of our HTTPServer on Port 8888
-            HttpRestServer server = new HttpRestServer(8888, appServiceConnection, valveController, programController);//, tempSensors);
-            IAsyncAction asyncAction = Windows.System.Threading.ThreadPool.RunAsync(
-                (workItem) =>
-                {   //Start the Sever
-                                server.StartServer();
-                });
+        private async Task InitializeAsync()
+        {
+            await initializationLock.WaitAsync();
+            try
+            {
+                if (initialized)
+                    return;
 
-            WebServer webServer = new WebServer(8889);
-            IAsyncAction asyncAction2 = Windows.System.Threading.ThreadPool.RunAsync(
-                (workItem) =>
-                {   //Start the Sever
-                    webServer.StartServer();
-                });
+                valveController = new SprinklerValveController();
+                programController = new SprinklerProgramController(valveController);
+                restServer = new HttpRestServer(8888, appServiceConnection, valveController, programController);
+                webServer = new WebServer(8889);
 
-
+                await restServer.StartServerAsync();
+                await webServer.StartServerAsync();
+                initialized = true;
+            }
+            catch
+            {
+                if (restServer != null)
+                    restServer.Dispose();
+                if (webServer != null)
+                    webServer.Dispose();
+                restServer = null;
+                webServer = null;
+                throw;
+            }
+            finally
+            {
+                initializationLock.Release();
+            }
         }
 
         private void TaskInstance_Canceled(IBackgroundTaskInstance sender, BackgroundTaskCancellationReason reason)
         {
-            //cleanup as needed
+            Utils.LogLine("Background task canceled: " + reason);
+            if (restServer != null)
+                restServer.Dispose();
+            if (webServer != null)
+                webServer.Dispose();
+            serviceDeferral.Complete();
         }
     }
 }

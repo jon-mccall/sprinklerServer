@@ -61,7 +61,7 @@
 		            url: url
 		        })
                 .done(function (data) {
-                    var obj = JSON.parse(data);
+                    var obj = typeof data === 'string' ? JSON.parse(data) : data;
                     if (obj.isError) {
                         // todo - display the error here
                         console.log('Error detected ' + obj)
@@ -140,10 +140,10 @@
 			    //console.log('adding click handler to ' + el.nodeName);
 			});
 
-			// check zone status every so often
+			// check zone status every so often (seconds between updates)
 			setInterval(function () {
 			    QueryStatus();
-            }, 3000);
+            }, 1000);
 
 		</script>
 	</body>

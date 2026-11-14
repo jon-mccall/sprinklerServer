@@ -24,7 +24,7 @@ var zoneCount = 0;
 		            url: url
 					 })
                 .done(function (data) {
-                    var obj = JSON.parse(data);
+                    var obj = typeof data === 'string' ? JSON.parse(data) : data;
                     if (obj.isError) {
                         // todo - display the error here
                         console.log('Error detected ' + obj)

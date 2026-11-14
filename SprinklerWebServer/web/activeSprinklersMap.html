@@ -41,7 +41,7 @@
 		            url: url
 		        })
                 .done(function (data) {
-                    var obj = JSON.parse(data);
+                    var obj = typeof data === 'string' ? JSON.parse(data) : data;
                     if (obj.isError) {
                         // todo - display the error here
                         console.log('Error detected ' + obj)
@@ -286,14 +286,14 @@
 
             //var hostAndPort = "http://minwinpc:8888";
             // seems like the iphone likes the ip address better...
-		    var hostAndPort = "http://192.168.1.200:8888";
+		    var hostAndPort = window.location.protocol + "//" + window.location.hostname + ":8888";
 		    var onOffList = new Array(false, false, false, false, false, false, false, false, false, false, false, false, false, false, false);
 
 
-			//// check zone status every so often
+			//// check zone status every so often (seconds between updates)
 			setInterval(function () {
 			    QueryStatus();
-			}, 3000);
+			}, 1000);
 
 		</script>
 	</body>

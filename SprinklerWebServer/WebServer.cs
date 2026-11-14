@@ -38,7 +38,7 @@ namespace SprinklerWebServer
             mimeTypeMap.Add(".png", "image/png");
 
             //Add event handler for HTTP connections
-            listener.ConnectionReceived += (s, e) => ProcessRequestAsync(e.Socket);
+            listener.ConnectionReceived += async (s, e) => await ProcessRequestAsync(e.Socket);
 
             System.Diagnostics.Debug.WriteLine("Sprinkler Web server starting...");
             System.Diagnostics.Debug.WriteLine("Current dir: "+ Directory.GetCurrentDirectory());
@@ -47,12 +47,11 @@ namespace SprinklerWebServer
         }
 
         //Call to start the listner 
-        public void StartServer()
+        internal async Task StartServerAsync()
         {
-#pragma warning disable CS4014
             System.Diagnostics.Debug.WriteLine("WebServer - binding the listener");
-            listener.BindServiceNameAsync(port.ToString());
-#pragma warning restore CS4014
+            await listener.BindServiceNameAsync(port.ToString());
+            System.Diagnostics.Debug.WriteLine("Web server bound to port " + port);
         }
 
         public void Dispose()
@@ -62,7 +61,7 @@ namespace SprinklerWebServer
         }
 
 
-        private async void ProcessRequestAsync(StreamSocket socket)
+        private async Task ProcessRequestAsync(StreamSocket socket)
         {
             string name = "";
             try
@@ -130,6 +129,7 @@ namespace SprinklerWebServer
             finally
             {
                 //System.Diagnostics.Debug.WriteLine("ProcessRequestAsync Finished! " + name);
+                socket.Dispose();
 
             }
         }

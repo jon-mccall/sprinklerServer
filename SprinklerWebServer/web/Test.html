@@ -56,14 +56,23 @@
 	  <script src="./js/base.js"></script>
       <script>
 
+            var statusRequestInFlight = false;
+
 		    function QueryStatus() {
+		        if (statusRequestInFlight) {
+		            return;
+		        }
+
+		        statusRequestInFlight = true;
 		        var url = hostAndPort + '/query/status';
 		        $.ajax({
 		            type: 'GET',
-		            url: url
+		            url: url,
+		            cache: false,
+		            timeout: 10000
 		        })
                 .done(function (data) {
-                    var obj = JSON.parse(data);
+                    var obj = typeof data === 'string' ? JSON.parse(data) : data;
                     if (obj.isError) {
                         // todo - display the error here
                         console.log('Error detected ' + obj)
@@ -93,6 +102,12 @@
                         $('#PauseTimeLeft').html(Math.floor(obj.ZonePauseSecondsLeft / 60) + ":" + (obj.ZonePauseSecondsLeft % 60));
                         
                     }
+                })
+                .fail(function (xhr, status, error) {
+                    console.log('Status request failed: ' + status + ' ' + error);
+                })
+                .always(function () {
+                    statusRequestInFlight = false;
                 });
 		    }
 
@@ -165,10 +180,14 @@
 
 		    }
 
-			// check zone status every so often
-			setInterval(function () {
+			// Poll only after the previous request completes. This prevents stalled
+			// requests from accumulating and eventually exhausting browser connections.
+			function ScheduleStatusPoll() {
 			    QueryStatus();
-            }, 3000);
+			    setTimeout(ScheduleStatusPoll, 3000);
+            }
+
+			ScheduleStatusPoll();
 
 		</script>
 	</body>
