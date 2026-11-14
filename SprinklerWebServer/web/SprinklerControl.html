@@ -19,7 +19,7 @@
 
 	</head>
 	<body>
-		<div class="holder">
+		<div id="ControlPage" class="holder">
 			<B class="title">Zones: </B> <label id="ControllerDatetime">[time]</label>
 			<table class="delegate delegateTd">
 				<tr>
@@ -61,6 +61,9 @@
 		            url: url
 		        })
                 .done(function (data) {
+                    if (!document.getElementById('ControlPage')) {
+                        return;
+                    }
                     var obj = typeof data === 'string' ? JSON.parse(data) : data;
                     if (obj.isError) {
                         // todo - display the error here
@@ -140,10 +143,16 @@
 			    //console.log('adding click handler to ' + el.nodeName);
 			});
 
-			// check zone status every so often (seconds between updates)
-			setInterval(function () {
+			// Stop polling after navigation removes this page from the document.
+			function ScheduleControlStatusPoll() {
+			    if (!document.getElementById('ControlPage')) {
+			        return;
+			    }
 			    QueryStatus();
-            }, 1000);
+			    setTimeout(ScheduleControlStatusPoll, 1000);
+            }
+
+			ScheduleControlStatusPoll();
 
 		</script>
 	</body>

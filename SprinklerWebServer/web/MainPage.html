@@ -193,7 +193,7 @@
         <section class="status-grid" aria-label="Controller status">
             <div class="status-row"><span class="status-label">Current Time</span><span class="status-value" id="ControllerDatetime">--</span></div>
             <div class="status-row"><span class="status-label">Running Zone</span><span class="status-value" id="RunningZone">none</span></div>
-            <div class="status-row"><span class="status-label">Zone Time Left</span><span class="status-value" id="ZoneRunSecondsLeft">0:00</span></div>
+            <div class="status-row"><span class="status-label">Zone Time Left</span><span class="status-value" id="MainZoneTimeLeft">0:00</span></div>
             <div class="status-row"><span class="status-label">Paused</span><span class="status-value" id="IsPaused">--</span></div>
             <div class="status-row"><span class="status-label">Pause Time Left</span><span class="status-value" id="PauseTimeLeft">0:00</span></div>
             <div class="status-row"><span class="status-label">Temperatures</span><span class="status-value" id="ControllerTemps">--</span></div>
@@ -221,6 +221,8 @@
             window.statusPagePollId = pollId;
             var nativeMapWidth = 568;
             var nativeMapHeight = 417;
+            var runningZoneNumber = 0;
+            var zoneNames = [];
             var zonePolygons = [
                 [[0, 0], [40, 0], [50, 160], [0, 200]],
                 [[40, 0], [100, 0], [200, 75], [165, 165]],
@@ -256,6 +258,36 @@
                 }
             }
 
+            function updateRunningZone() {
+                if (runningZoneNumber === 0) {
+                    $('#RunningZone').text('none');
+                    return;
+                }
+
+                var zoneName = zoneNames[runningZoneNumber];
+                $('#RunningZone').text(zoneName ? runningZoneNumber + ' — ' + zoneName : runningZoneNumber);
+            }
+
+            function queryZoneNames() {
+                $.ajax({
+                    type: 'GET',
+                    url: hostAndPort + '/query/zonelist',
+                    cache: false,
+                    timeout: 10000
+                })
+                .done(function (data) {
+                    var zones = typeof data === 'string' ? JSON.parse(data) : data;
+                    if (zones.isError) {
+                        return;
+                    }
+
+                    for (var i = 0; i < zones.length; i++) {
+                        zoneNames[zones[i].Id] = zones[i].Name;
+                    }
+                    updateRunningZone();
+                });
+            }
+
             window.queryStatus = function () {
                 if (statusRequestInFlight || !document.getElementById('StatusPage')) {
                     return;
@@ -275,19 +307,19 @@
                         return;
                     }
 
-                    var runningZone = 'none';
+                    runningZoneNumber = 0;
                     for (var i = 0; i < status.ZonesOn.length; i++) {
                         if (status.ZonesOn[i] === true) {
-                            runningZone = i + 1;
+                            runningZoneNumber = i + 1;
                             break;
                         }
                     }
 
                     $('#ControllerDatetime').text(status.CurrentTime);
-                    $('#RunningZone').text(runningZone);
+                    updateRunningZone();
                     $('#IsPaused').text(status.IsPaused ? 'Yes' : 'No');
                     $('#ControllerTemps').text('Inside: ' + status.InsideTemp + '°F  Outside: ' + status.OutsideTemp + '°F');
-                    $('#ZoneRunSecondsLeft').text(formatDuration(status.ZoneRunSecondsLeft));
+                    $('#MainZoneTimeLeft').text(formatDuration(status.ZoneRunSecondsLeft));
                     $('#PauseTimeLeft').text(formatDuration(status.ZonePauseSecondsLeft));
                     updateZoneImages(status.ZonesOn);
                     showMessage('');
@@ -358,6 +390,7 @@
 
             $('#SprinklerMap').on('click', mapClicked);
             updateZoneImages(onOffList.slice(1));
+            queryZoneNames();
 
             function scheduleStatusPoll() {
                 if (!document.getElementById('StatusPage') || window.statusPagePollId !== pollId) {
